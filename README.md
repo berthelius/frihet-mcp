@@ -197,7 +197,7 @@ The MCP server translates natural language tool calls into REST API requests. It
 | Variable | Required | Default |
 |----------|----------|---------|
 | `FRIHET_API_KEY` | Yes | -- |
-| `FRIHET_API_URL` | No | `https://us-central1-frihet-app.cloudfunctions.net/publicApi/api/v1` |
+| `FRIHET_API_URL` | No | `https://api.frihet.io/v1` |
 
 `FRIHET_API_URL` is useful if you self-host or want to point to a staging environment.
 
