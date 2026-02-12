@@ -59,16 +59,35 @@ function createServerForKey(apiKey: string): McpServer {
 // CORS
 // ---------------------------------------------------------------------------
 
-const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key, mcp-session-id, MCP-Protocol-Version",
-  "Access-Control-Expose-Headers": "mcp-session-id",
-};
+const ALLOWED_ORIGINS = [
+  'https://claude.ai',
+  'https://app.frihet.io',
+  'https://frihet.io',
+  'https://cursor.sh',
+  'https://www.cursor.sh',
+];
 
-function withCors(response: Response): Response {
+function getCorsOrigin(request: Request): string {
+  const origin = request.headers.get('Origin');
+  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
+  // For non-browser clients (stdio MCP, curl, etc.) — no Origin header
+  // Return first allowed origin as default (browsers will reject mismatch)
+  return ALLOWED_ORIGINS[0];
+}
+
+function getCorsHeaders(request: Request): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": getCorsOrigin(request),
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key, mcp-session-id, MCP-Protocol-Version",
+    "Access-Control-Expose-Headers": "mcp-session-id",
+  };
+}
+
+function withCors(response: Response, request: Request): Response {
+  const corsHeaders = getCorsHeaders(request);
   const headers = new Headers(response.headers);
-  for (const [key, value] of Object.entries(CORS_HEADERS)) {
+  for (const [key, value] of Object.entries(corsHeaders)) {
     headers.set(key, value);
   }
   return new Response(response.body, {
@@ -78,10 +97,11 @@ function withCors(response: Response): Response {
   });
 }
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(body: unknown, status = 200, request?: Request): Response {
+  const corsHeaders = request ? getCorsHeaders(request) : getCorsHeaders(new Request('https://mcp.frihet.io'));
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+    headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 }
 
@@ -95,7 +115,7 @@ export default {
 
     // CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return new Response(null, { status: 204, headers: getCorsHeaders(request) });
     }
 
     // Health check / info endpoint
@@ -118,7 +138,7 @@ export default {
           mcp: "https://mcp.frihet.io/mcp",
           health: "https://mcp.frihet.io/health",
         },
-      });
+      }, 200, request);
     }
 
     // Only /mcp path handles MCP protocol
@@ -126,6 +146,7 @@ export default {
       return jsonResponse(
         { error: "not_found", message: "Use /mcp for MCP protocol, / for server info." },
         404,
+        request,
       );
     }
 
@@ -139,6 +160,7 @@ export default {
             "Frihet API key is required. Pass via Authorization: Bearer <key>, X-API-Key header, or ?api_key= query param.",
         },
         401,
+        request,
       );
     }
 
@@ -152,10 +174,10 @@ export default {
       // Connect and handle
       await server.connect(transport);
       const response = await transport.handleRequest(request);
-      return withCors(response);
+      return withCors(response, request);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Internal server error";
-      return jsonResponse({ error: "server_error", message }, 500);
+      return jsonResponse({ error: "server_error", message }, 500, request);
     }
   },
 };

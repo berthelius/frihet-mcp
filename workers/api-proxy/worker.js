@@ -7,19 +7,31 @@
 
 const DEFAULT_UPSTREAM = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-API-Key, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
+const ALLOWED_ORIGINS = [
+  'https://app.frihet.io',
+  'https://frihet.io',
+  'https://www.frihet.io',
+  'https://frihet-erp.vercel.app',
+];
+
+function getCorsHeaders(request) {
+  const origin = request.headers.get('Origin');
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
 
 export default {
   async fetch(request, env) {
     const UPSTREAM = env.FRIHET_UPSTREAM_URL || DEFAULT_UPSTREAM;
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return new Response(null, { status: 204, headers: getCorsHeaders(request) });
     }
 
     const url = new URL(request.url);
@@ -51,8 +63,9 @@ export default {
       clearTimeout(timeoutId);
 
       // Clone response and add CORS headers
+      const corsHeaders = getCorsHeaders(request);
       const responseHeaders = new Headers(response.headers);
-      for (const [key, value] of Object.entries(CORS_HEADERS)) {
+      for (const [key, value] of Object.entries(corsHeaders)) {
         responseHeaders.set(key, value);
       }
 
@@ -70,7 +83,7 @@ export default {
           status: 502,
           headers: {
             'Content-Type': 'application/json',
-            ...CORS_HEADERS,
+            ...getCorsHeaders(request),
           },
         }
       );
