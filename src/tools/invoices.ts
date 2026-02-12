@@ -4,7 +4,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
-import type { FrihetClient } from "../client.js";
+import type { IFrihetClient } from "../client-interface.js";
 import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
 
 const invoiceItemSchema = z.object({
@@ -13,7 +13,7 @@ const invoiceItemSchema = z.object({
   unitPrice: z.number().describe("Unit price in EUR / Precio unitario en EUR"),
 });
 
-export function registerInvoiceTools(server: McpServer, client: FrihetClient): void {
+export function registerInvoiceTools(server: McpServer, client: IFrihetClient): void {
   // -- list_invoices --
 
   server.registerTool(

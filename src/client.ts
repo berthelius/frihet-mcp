@@ -129,11 +129,42 @@ export class FrihetClient {
       return undefined as T;
     }
 
-    return (await response.json()) as T;
+    const data = await response.json();
+
+    // Basic response validation
+    if (data === null || data === undefined) {
+      throw new FrihetApiError(
+        response.status,
+        'invalid_response',
+        'API returned empty response',
+      );
+    }
+
+    return data as T;
   }
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /** Wrapper for paginated endpoints — validates response shape has `data` array. */
+  private async requestPaginated<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    query?: Record<string, string | number | undefined>,
+  ): Promise<PaginatedResponse<T>> {
+    const result = await this.request<PaginatedResponse<T>>(method, path, body, query);
+
+    if (!result || !Array.isArray(result.data)) {
+      throw new FrihetApiError(
+        200,
+        'invalid_response',
+        'API returned invalid paginated response',
+      );
+    }
+
+    return result;
   }
 
   // ---------------------------------------------------------------- Public
@@ -144,7 +175,7 @@ export class FrihetClient {
   async listInvoices(
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/invoices", undefined, {
+    return this.requestPaginated("GET", "/invoices", undefined, {
       limit: params?.limit,
       offset: params?.offset,
     });
@@ -173,7 +204,7 @@ export class FrihetClient {
     clientName: string,
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/invoices", undefined, {
+    return this.requestPaginated("GET", "/invoices", undefined, {
       clientName,
       limit: params?.limit,
       offset: params?.offset,
@@ -185,7 +216,7 @@ export class FrihetClient {
   async listExpenses(
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/expenses", undefined, {
+    return this.requestPaginated("GET", "/expenses", undefined, {
       limit: params?.limit,
       offset: params?.offset,
     });
@@ -215,7 +246,7 @@ export class FrihetClient {
   async listClients(
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/clients", undefined, {
+    return this.requestPaginated("GET", "/clients", undefined, {
       limit: params?.limit,
       offset: params?.offset,
     });
@@ -245,7 +276,7 @@ export class FrihetClient {
   async listProducts(
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/products", undefined, {
+    return this.requestPaginated("GET", "/products", undefined, {
       limit: params?.limit,
       offset: params?.offset,
     });
@@ -275,7 +306,7 @@ export class FrihetClient {
   async listQuotes(
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/quotes", undefined, {
+    return this.requestPaginated("GET", "/quotes", undefined, {
       limit: params?.limit,
       offset: params?.offset,
     });
@@ -305,7 +336,7 @@ export class FrihetClient {
   async listWebhooks(
     params?: { limit?: number; offset?: number },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
-    return this.request("GET", "/webhooks", undefined, {
+    return this.requestPaginated("GET", "/webhooks", undefined, {
       limit: params?.limit,
       offset: params?.offset,
     });

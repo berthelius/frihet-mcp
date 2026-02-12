@@ -1,9 +1,30 @@
 /**
  * Shared utilities for MCP tool handlers.
+ *
+ * This module is used by both the local (stdio) and remote (Cloudflare Workers)
+ * MCP servers. It must NOT import concrete classes from either client — error
+ * detection uses duck-typing (checking for `statusCode`/`errorCode` properties)
+ * so it works regardless of which FrihetApiError class threw the error.
  */
 
-import { FrihetApiError } from "../client.js";
 import type { PaginatedResponse } from "../types.js";
+
+/** Shape of errors thrown by any FrihetClient implementation. */
+interface FrihetApiErrorLike {
+  statusCode: number;
+  errorCode: string;
+  message: string;
+}
+
+function isFrihetApiError(error: unknown): error is FrihetApiErrorLike {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "statusCode" in error &&
+    "errorCode" in error &&
+    typeof (error as FrihetApiErrorLike).statusCode === "number"
+  );
+}
 
 /**
  * Maps an error to a user-friendly MCP tool response.
@@ -12,7 +33,7 @@ export function handleToolError(error: unknown): {
   content: Array<{ type: "text"; text: string }>;
   isError: true;
 } {
-  if (error instanceof FrihetApiError) {
+  if (isFrihetApiError(error)) {
     const messages: Record<number, string> = {
       400: "Bad request. Check your input parameters. / Solicitud incorrecta. Revisa los parametros.",
       401: "Authentication failed. Check your API key. / Autenticacion fallida. Revisa tu API key.",

@@ -14,12 +14,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { FrihetClient } from "./client.js";
-import { registerInvoiceTools } from "./tools/invoices.js";
-import { registerExpenseTools } from "./tools/expenses.js";
-import { registerClientTools } from "./tools/clients.js";
-import { registerProductTools } from "./tools/products.js";
-import { registerQuoteTools } from "./tools/quotes.js";
-import { registerWebhookTools } from "./tools/webhooks.js";
+import { registerAllTools } from "./tools/register-all.js";
 
 function main(): void {
   const apiKey = process.env.FRIHET_API_KEY;
@@ -42,13 +37,8 @@ function main(): void {
     version: "1.0.0",
   });
 
-  // Register all tools
-  registerInvoiceTools(server, client);
-  registerExpenseTools(server, client);
-  registerClientTools(server, client);
-  registerProductTools(server, client);
-  registerQuoteTools(server, client);
-  registerWebhookTools(server, client);
+  // Register all 31 tools
+  registerAllTools(server, client);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();
