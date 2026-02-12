@@ -9,36 +9,44 @@
  * Auth: pass your Frihet API key via:
  *   - Authorization: Bearer fri_xxx
  *   - X-API-Key: fri_xxx
- *   - ?api_key=fri_xxx query param
+ *   - ?api_key=fri_xxx query param (deprecated — use headers instead)
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { FrihetClient } from "./client.js";
-import { registerAllTools } from "./tools.js";
+import { registerAllTools } from "../../../src/tools/register-all.js";
 
 // ---------------------------------------------------------------------------
 // Auth extraction
 // ---------------------------------------------------------------------------
 
-function extractApiKey(request: Request): string | null {
+function extractApiKey(request: Request): { key: string | null; method: 'bearer' | 'header' | 'query' | null } {
   // 1. Authorization: Bearer fri_xxx
   const authHeader = request.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
-    if (token) return token;
+    if (token) return { key: token, method: 'bearer' };
   }
 
   // 2. X-API-Key: fri_xxx
   const xApiKey = request.headers.get("X-API-Key");
-  if (xApiKey) return xApiKey;
+  if (xApiKey) return { key: xApiKey, method: 'header' };
 
-  // 3. ?api_key=fri_xxx query param
+  // 3. ?api_key=fri_xxx query param (deprecated — use headers instead)
   const url = new URL(request.url);
   const paramKey = url.searchParams.get("api_key");
-  if (paramKey) return paramKey;
+  if (paramKey) return { key: paramKey, method: 'query' };
 
-  return null;
+  return { key: null, method: null };
+}
+
+/** Add deprecation headers when query param auth was used. */
+function addDeprecationHeaders(headers: Headers, authMethod: string | null): void {
+  if (authMethod === 'query') {
+    headers.set('Deprecation', 'true');
+    headers.set('X-Frihet-Warning', 'Query parameter authentication is deprecated. Use Authorization: Bearer or X-API-Key headers instead.');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -80,16 +88,17 @@ function getCorsHeaders(request: Request): Record<string, string> {
     "Access-Control-Allow-Origin": getCorsOrigin(request),
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key, mcp-session-id, MCP-Protocol-Version",
-    "Access-Control-Expose-Headers": "mcp-session-id",
+    "Access-Control-Expose-Headers": "mcp-session-id, Deprecation, X-Frihet-Warning",
   };
 }
 
-function withCors(response: Response, request: Request): Response {
+function withCors(response: Response, request: Request, authMethod?: string | null): Response {
   const corsHeaders = getCorsHeaders(request);
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(corsHeaders)) {
     headers.set(key, value);
   }
+  if (authMethod) addDeprecationHeaders(headers, authMethod);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -97,12 +106,12 @@ function withCors(response: Response, request: Request): Response {
   });
 }
 
-function jsonResponse(body: unknown, status = 200, request?: Request): Response {
+function jsonResponse(body: unknown, status = 200, request?: Request, authMethod?: string | null): Response {
   const corsHeaders = request ? getCorsHeaders(request) : getCorsHeaders(new Request('https://mcp.frihet.io'));
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...corsHeaders };
+  const response = new Response(JSON.stringify(body), { status, headers });
+  if (authMethod) addDeprecationHeaders(response.headers, authMethod);
+  return response;
 }
 
 // ---------------------------------------------------------------------------
@@ -151,7 +160,7 @@ export default {
     }
 
     // Extract API key
-    const apiKey = extractApiKey(request);
+    const { key: apiKey, method: authMethod } = extractApiKey(request);
     if (!apiKey) {
       return jsonResponse(
         {
@@ -174,10 +183,10 @@ export default {
       // Connect and handle
       await server.connect(transport);
       const response = await transport.handleRequest(request);
-      return withCors(response, request);
+      return withCors(response, request, authMethod);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Internal server error";
-      return jsonResponse({ error: "server_error", message }, 500, request);
+      return jsonResponse({ error: "server_error", message }, 500, request, authMethod);
     }
   },
 };

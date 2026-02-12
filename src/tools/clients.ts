@@ -4,7 +4,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
-import type { FrihetClient } from "../client.js";
+import type { IFrihetClient } from "../client-interface.js";
 import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
 
 const addressSchema = z
@@ -17,7 +17,7 @@ const addressSchema = z
   .optional()
   .describe("Client address / Direccion del cliente");
 
-export function registerClientTools(server: McpServer, client: FrihetClient): void {
+export function registerClientTools(server: McpServer, client: IFrihetClient): void {
   // -- list_clients --
 
   server.registerTool(

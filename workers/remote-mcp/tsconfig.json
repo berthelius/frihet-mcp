@@ -13,6 +13,6 @@
     "noEmit": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../src/tools/**/*", "../../src/client-interface.ts", "../../src/types.ts"],
   "exclude": ["node_modules"]
 }
