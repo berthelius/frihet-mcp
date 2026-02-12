@@ -60,6 +60,26 @@ One line. Pick your tool.
 
 The JSON config is identical for all tools. Only the file path changes.
 
+### Remote (no install)
+
+If you prefer not to install anything locally, use the hosted endpoint at `mcp.frihet.io`:
+
+```json
+{
+  "mcpServers": {
+    "frihet": {
+      "type": "streamable-http",
+      "url": "https://mcp.frihet.io/mcp",
+      "headers": {
+        "Authorization": "Bearer fri_your_key_here"
+      }
+    }
+  }
+}
+```
+
+Same 31 tools, zero local dependencies. Runs on Cloudflare Workers.
+
 ### Get your API key
 
 1. Log into [app.frihet.io](https://app.frihet.io)
@@ -260,6 +280,7 @@ No other Spanish ERP has an official MCP server. Frihet is first.
 - [Frihet ERP](https://frihet.io) -- The product
 - [API documentation](https://docs.frihet.io/desarrolladores/api-rest) -- REST API reference
 - [Webhook documentation](https://docs.frihet.io/desarrolladores/webhooks) -- Events, signatures, retries
+- [Remote endpoint](https://mcp.frihet.io) -- Hosted MCP server (Cloudflare Workers)
 - [MCP specification](https://modelcontextprotocol.io) -- The protocol
 
 ---
