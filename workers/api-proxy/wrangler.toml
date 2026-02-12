@@ -4,7 +4,7 @@ compatibility_date = "2026-01-01"
 account_id = "ac385684ceb71bc889f6eb3abade1e32"
 
 [vars]
-FRIHET_UPSTREAM_URL = "https://us-central1-frihet-app.cloudfunctions.net/publicApi/api"
+FRIHET_UPSTREAM_URL = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api"
 
 [[routes]]
 pattern = "api.frihet.io/*"

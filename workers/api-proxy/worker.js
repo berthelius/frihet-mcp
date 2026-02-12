@@ -5,7 +5,7 @@
  * Handles CORS, passes all headers, and returns responses as-is.
  */
 
-const DEFAULT_UPSTREAM = "https://us-central1-frihet-app.cloudfunctions.net/publicApi/api";
+const DEFAULT_UPSTREAM = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -32,7 +32,7 @@ export default {
     upstream.search = url.search;
 
     const headers = new Headers(request.headers);
-    headers.set("Host", "us-central1-frihet-app.cloudfunctions.net");
+    headers.set("Host", "us-central1-gen-lang-client-0335716041.cloudfunctions.net");
 
     const response = await fetch(upstream.toString(), {
       method: request.method,
