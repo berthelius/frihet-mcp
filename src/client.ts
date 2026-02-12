@@ -10,6 +10,7 @@ const BASE_URL = "https://api.frihet.io/v1";
 
 const MAX_RETRIES = 3;
 const DEFAULT_RETRY_DELAY_MS = 1000;
+const REQUEST_TIMEOUT_MS = 30000;
 
 export class FrihetApiError extends Error {
   constructor(
@@ -62,11 +63,29 @@ export class FrihetClient {
       Accept: "application/json",
     };
 
-    const response = await fetch(url.toString(), {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(url.toString(), {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new FrihetApiError(
+          408,
+          "request_timeout",
+          `Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds`,
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     // Rate limit handling
     if (response.status === 429) {
