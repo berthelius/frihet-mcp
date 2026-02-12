@@ -5,7 +5,7 @@
  * Handles CORS, passes all headers, and returns responses as-is.
  */
 
-const UPSTREAM = "https://us-central1-frihet-app.cloudfunctions.net/publicApi/api";
+const DEFAULT_UPSTREAM = "https://us-central1-frihet-app.cloudfunctions.net/publicApi/api";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +15,8 @@ const CORS_HEADERS = {
 };
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
+    const UPSTREAM = env.FRIHET_UPSTREAM_URL || DEFAULT_UPSTREAM;
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -26,7 +27,7 @@ export default {
 
     // Proxy to upstream
     const upstream = new URL(path, UPSTREAM);
-    // Rewrite: api.frihet.io/v1/invoices → upstream/api/v1/invoices
+    // Rewrite: api.frihet.io/v1/invoices → upstream/publicApi/api/v1/invoices
     upstream.pathname = "/publicApi/api" + url.pathname;
     upstream.search = url.search;
 
