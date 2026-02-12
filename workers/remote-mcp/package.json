@@ -1,0 +1,21 @@
+{
+  "name": "@frihet/remote-mcp-server",
+  "version": "1.0.0",
+  "description": "Remote MCP server for Frihet ERP on Cloudflare Workers (Streamable HTTP)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.0.0"
+  }
+}

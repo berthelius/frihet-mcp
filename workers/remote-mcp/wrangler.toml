@@ -1,0 +1,11 @@
+name = "frihet-remote-mcp"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[[routes]]
+pattern = "mcp.frihet.io/*"
+zone_name = "frihet.io"
