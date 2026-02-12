@@ -34,24 +34,46 @@ export default {
     const headers = new Headers(request.headers);
     headers.set("Host", "us-central1-gen-lang-client-0335716041.cloudfunctions.net");
 
-    const response = await fetch(upstream.toString(), {
-      method: request.method,
-      headers,
-      body: request.method !== "GET" && request.method !== "HEAD"
-        ? request.body
-        : undefined,
-    });
+    // Abort before the Worker's 30s limit to fail cleanly
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-    // Clone response and add CORS headers
-    const responseHeaders = new Headers(response.headers);
-    for (const [key, value] of Object.entries(CORS_HEADERS)) {
-      responseHeaders.set(key, value);
+    try {
+      const response = await fetch(upstream.toString(), {
+        method: request.method,
+        headers,
+        body: request.method !== "GET" && request.method !== "HEAD"
+          ? request.body
+          : undefined,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Clone response and add CORS headers
+      const responseHeaders = new Headers(response.headers);
+      for (const [key, value] of Object.entries(CORS_HEADERS)) {
+        responseHeaders.set(key, value);
+      }
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      return new Response(
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        {
+          status: 502,
+          headers: {
+            'Content-Type': 'application/json',
+            ...CORS_HEADERS,
+          },
+        }
+      );
     }
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders,
-    });
   },
 };
