@@ -1,0 +1,8 @@
+name = "frihet-api-proxy"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+account_id = "ac385684ceb71bc889f6eb3abade1e32"
+
+[[routes]]
+pattern = "api.frihet.io/*"
+zone_name = "frihet.io"

@@ -6,8 +6,7 @@
 
 import type { PaginatedResponse, ApiError } from "./types.js";
 
-const BASE_URL =
-  "https://us-central1-frihet-app.cloudfunctions.net/publicApi/api/v1";
+const BASE_URL = "https://api.frihet.io/v1";
 
 const MAX_RETRIES = 3;
 const DEFAULT_RETRY_DELAY_MS = 1000;
