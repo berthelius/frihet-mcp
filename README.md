@@ -237,6 +237,37 @@ Rate limiting is handled automatically with exponential backoff. You don't need 
 
 ---
 
+## Claude Code Skill
+
+Beyond raw MCP tools, Frihet ships a **Claude Code skill** that adds business intelligence: Spanish tax context, workflow recipes (monthly close, quarterly tax prep, overdue follow-up), formatted financial reports, and natural language commands.
+
+### Install the skill
+
+```bash
+# Clone and symlink
+git clone https://github.com/berthelius/frihet-mcp.git
+ln -s "$(pwd)/frihet-mcp/skill" ~/.claude/skills/frihet
+```
+
+### Commands
+
+| Command | What it does |
+|---------|-------------|
+| `/frihet status` | Account overview, recent activity, pending payments |
+| `/frihet invoice` | Create, list, search invoices |
+| `/frihet expense` | Log and query expenses |
+| `/frihet clients` | Manage client database |
+| `/frihet quote` | Create and manage quotes |
+| `/frihet report` | Financial summaries (P&L, quarterly, overdue) |
+| `/frihet webhooks` | Configure automation triggers |
+| `/frihet setup` | Guided setup and connection test |
+
+The skill knows about IVA rates, IRPF retention, Modelo 303 prep, expense deductibility rules, and Verifactu compliance. It's your accountant in the terminal.
+
+Full documentation: [docs.frihet.io/desarrolladores/skill-claude-code](https://docs.frihet.io/desarrolladores/skill-claude-code)
+
+---
+
 ## Development
 
 ```bash
