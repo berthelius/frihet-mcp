@@ -13,6 +13,12 @@
     "noEmit": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*", "../../src/tools/**/*", "../../src/client-interface.ts", "../../src/types.ts"],
+  "include": [
+    "src/**/*",
+    "worker-configuration.d.ts",
+    "../../src/tools/**/*",
+    "../../src/client-interface.ts",
+    "../../src/types.ts"
+  ],
   "exclude": ["node_modules"]
 }

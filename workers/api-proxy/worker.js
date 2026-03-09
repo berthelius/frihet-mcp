@@ -35,6 +35,23 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // Public routes: forward to /publicApi/ (no /api/ prefix) for root-level endpoints
+    if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/openapi.yaml")) {
+      const upstream = new URL(url.pathname, UPSTREAM);
+      upstream.pathname = "/publicApi" + url.pathname;
+      upstream.search = url.search;
+      const headers = new Headers(request.headers);
+      headers.set("Host", "us-central1-gen-lang-client-0335716041.cloudfunctions.net");
+      const response = await fetch(upstream.toString(), { method: "GET", headers });
+      const corsHeaders = getCorsHeaders(request);
+      const responseHeaders = new Headers(response.headers);
+      for (const [key, value] of Object.entries(corsHeaders)) {
+        responseHeaders.set(key, value);
+      }
+      return new Response(response.body, { status: response.status, headers: responseHeaders });
+    }
+
     const path = url.pathname + url.search;
 
     // Proxy to upstream

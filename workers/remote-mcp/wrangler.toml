@@ -3,9 +3,23 @@ main = "src/index.ts"
 compatibility_date = "2025-12-01"
 compatibility_flags = ["nodejs_compat"]
 
+routes = [{ pattern = "mcp.frihet.io/*", zone_name = "frihet.io" }]
+
 [observability]
 enabled = true
 
-[[routes]]
-pattern = "mcp.frihet.io/*"
-zone_name = "frihet.io"
+[durable_objects]
+bindings = [
+  { name = "MCP_OBJECT", class_name = "FrihetMCP" }
+]
+
+[[migrations]]
+new_sqlite_classes = ["FrihetMCP"]
+tag = "v1"
+
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "9207b98598f849109139ad11f3b0ac51"
+
+[dev]
+port = 8788
