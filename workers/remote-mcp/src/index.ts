@@ -125,8 +125,11 @@ export default {
       });
     }
 
-    // Favicon for Google's s2/favicons service and browsers
-    if (url.pathname === "/favicon.ico" || url.pathname === "/favicon.svg") {
+    // Favicon: .ico redirects to main site's real ICO, .svg served inline
+    if (url.pathname === "/favicon.ico") {
+      return Response.redirect("https://frihet.io/favicon.ico", 301);
+    }
+    if (url.pathname === "/favicon.svg") {
       return new Response(FAVICON_SVG, {
         headers: {
           "Content-Type": "image/svg+xml",
