@@ -1,7 +1,7 @@
 {
   "name": "@frihet/mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for Frihet ERP — manage invoices, expenses, clients, products and quotes with AI",
+  "description": "AI-native MCP server for business management — invoices, expenses, clients, products, quotes, webhooks. 31 tools. Works with Claude, Cursor, Windsurf, Cline.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
@@ -21,7 +21,17 @@
     "model-context-protocol",
     "claude",
     "cursor",
-    "windsurf"
+    "windsurf",
+    "business-management",
+    "accounting",
+    "expenses",
+    "tax-compliance",
+    "verifactu",
+    "copilot",
+    "cline",
+    "codex",
+    "ai-agent",
+    "automation"
   ],
   "author": "BRTHLS <viktor@brthls.com>",
   "license": "MIT",
@@ -29,7 +39,8 @@
     "type": "git",
     "url": "https://github.com/berthelius/frihet-mcp.git"
   },
-  "homepage": "https://github.com/berthelius/frihet-mcp#readme",
+  "mcpName": "io.github.berthelius/frihet",
+  "homepage": "https://docs.frihet.io/desarrolladores/mcp-server",
   "bugs": {
     "url": "https://github.com/berthelius/frihet-mcp/issues"
   },
