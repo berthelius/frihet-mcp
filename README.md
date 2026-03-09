@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>The first AI-native MCP server for a Spanish ERP.</strong><br/>
-  <em>El primer servidor MCP nativo para un ERP espanol.</em>
+  <strong>AI-native MCP server for business management.</strong><br/>
+  <em>Servidor MCP nativo con IA para gestión empresarial.</em>
 </p>
 
 <p align="center">
@@ -302,7 +302,7 @@ npx @modelcontextprotocol/inspector node dist/index.js
 | AI assistant built-in | **Yes** | No | No | No | No |
 | Open source tooling | **Yes** | No | No | No | No |
 
-No other Spanish ERP has an official MCP server. Frihet is first.
+The first business management platform with an official MCP server. No other ERP has this.
 
 ---
 
