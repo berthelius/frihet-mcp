@@ -43,6 +43,7 @@ app.get("/health", (c) =>
   c.json({ status: "ok", timestamp: new Date().toISOString() }),
 );
 
+
 // ---------------------------------------------------------------------------
 // OAuth: Authorization — show Firebase login page
 // ---------------------------------------------------------------------------
