@@ -109,15 +109,32 @@ const oauthProvider = new OAuthProvider({
   },
 });
 
-// Wrap OAuthProvider to handle HEAD requests gracefully (required by Anthropic)
+// Frihet favicon — black circle (#171717)
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><circle cx="250" cy="250" r="230" fill="#171717"/></svg>`;
+
+// Wrap OAuthProvider to handle HEAD + favicon before OAuth routing
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    const url = new URL(request.url);
+
+    // HEAD requests → 200 (required by Anthropic)
     if (request.method === "HEAD") {
       return new Response(null, {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Favicon for Google's s2/favicons service and browsers
+    if (url.pathname === "/favicon.ico" || url.pathname === "/favicon.svg") {
+      return new Response(FAVICON_SVG, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=86400",
+        },
+      });
+    }
+
     return oauthProvider.fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
