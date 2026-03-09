@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
 
 export function registerWebhookTools(server: McpServer, client: IFrihetClient): void {
   // -- list_webhooks --
@@ -17,6 +17,7 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       description:
         "List all configured webhooks. Webhooks send HTTP POST notifications when events occur in Frihet. " +
         "/ Lista todos los webhooks configurados. Los webhooks envian notificaciones HTTP POST cuando ocurren eventos en Frihet.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
@@ -43,6 +44,7 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       description:
         "Get a single webhook configuration by its ID. " +
         "/ Obtiene la configuracion de un webhook por su ID.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Webhook ID / ID del webhook"),
       },
@@ -70,6 +72,7 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
         "and which events to subscribe to (e.g. 'invoice.created', 'invoice.paid', 'expense.created'). " +
         "/ Registra un nuevo endpoint de webhook. Debes especificar la URL y los eventos " +
         "a los que suscribirte (ej. 'invoice.created', 'invoice.paid', 'expense.created').",
+      annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         url: z.string().url().describe("Webhook endpoint URL / URL del endpoint del webhook"),
         events: z
@@ -112,6 +115,7 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       description:
         "Update an existing webhook configuration. Only the provided fields will be changed. " +
         "/ Actualiza la configuracion de un webhook. Solo se modifican los campos proporcionados.",
+      annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Webhook ID / ID del webhook"),
         url: z.string().url().optional().describe("Endpoint URL / URL"),
@@ -141,6 +145,7 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       description:
         "Permanently delete a webhook by its ID. Notifications will stop immediately. " +
         "/ Elimina permanentemente un webhook por su ID. Las notificaciones se detendran inmediatamente.",
+      annotations: DELETE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Webhook ID / ID del webhook"),
       },

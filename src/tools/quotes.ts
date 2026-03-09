@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
 
 const quoteItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -25,6 +25,7 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
         "Quotes are proposals sent to clients before they become invoices. " +
         "/ Lista todos los presupuestos con paginacion opcional. " +
         "Los presupuestos son propuestas enviadas a clientes antes de facturar.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
@@ -51,6 +52,7 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       description:
         "Get a single quote/estimate by its ID. Returns the full quote with line items and totals. " +
         "/ Obtiene un presupuesto por su ID. Devuelve el presupuesto completo con conceptos y totales.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Quote ID / ID del presupuesto"),
       },
@@ -78,6 +80,7 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
         "Quotes can later be converted to invoices. " +
         "/ Crea un nuevo presupuesto para un cliente. Requiere nombre del cliente y al menos un concepto. " +
         "Los presupuestos se pueden convertir en facturas despues.",
+      annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         clientName: z.string().describe("Client name / Nombre del cliente"),
         items: z
@@ -116,6 +119,7 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       description:
         "Update an existing quote. Only the provided fields will be changed. " +
         "/ Actualiza un presupuesto existente. Solo se modifican los campos proporcionados.",
+      annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Quote ID / ID del presupuesto"),
         clientName: z.string().optional().describe("Client name / Nombre del cliente"),
@@ -149,6 +153,7 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       description:
         "Permanently delete a quote by its ID. This action cannot be undone. " +
         "/ Elimina permanentemente un presupuesto por su ID. Esta accion no se puede deshacer.",
+      annotations: DELETE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Quote ID / ID del presupuesto"),
       },

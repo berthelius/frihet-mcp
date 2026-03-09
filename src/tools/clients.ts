@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
 
 const addressSchema = z
   .object({
@@ -29,6 +29,7 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         "Returns contact info, tax IDs, and addresses. " +
         "/ Lista todos los clientes con paginacion opcional. " +
         "Devuelve informacion de contacto, NIF/CIF y direcciones.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
@@ -55,6 +56,7 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       description:
         "Get a single client by their ID. Returns full contact details. " +
         "/ Obtiene un cliente por su ID. Devuelve todos los datos de contacto.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Client ID / ID del cliente"),
       },
@@ -82,6 +84,7 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         "Clients are used when creating invoices and quotes. " +
         "/ Crea un nuevo cliente. Requiere como minimo un nombre. " +
         "Los clientes se usan al crear facturas y presupuestos.",
+      annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         name: z.string().describe("Client/company name / Nombre del cliente o empresa"),
         email: z.string().optional().describe("Email address / Correo electronico"),
@@ -111,6 +114,7 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       description:
         "Update an existing client. Only the provided fields will be changed. " +
         "/ Actualiza un cliente existente. Solo se modifican los campos proporcionados.",
+      annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Client ID / ID del cliente"),
         name: z.string().optional().describe("Name / Nombre"),
@@ -143,6 +147,7 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         "Warning: this may affect existing invoices and quotes referencing this client. " +
         "/ Elimina permanentemente un cliente por su ID. Esta accion no se puede deshacer. " +
         "Advertencia: puede afectar a facturas y presupuestos existentes.",
+      annotations: DELETE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Client ID / ID del cliente"),
       },
