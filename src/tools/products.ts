@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
 
 export function registerProductTools(server: McpServer, client: IFrihetClient): void {
   // -- list_products --
@@ -19,6 +19,7 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
         "Products are reusable items that can be added to invoices and quotes. " +
         "/ Lista todos los productos/servicios con paginacion opcional. " +
         "Los productos son conceptos reutilizables para facturas y presupuestos.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
@@ -45,6 +46,7 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       description:
         "Get a single product/service by its ID. " +
         "/ Obtiene un producto/servicio por su ID.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Product ID / ID del producto"),
       },
@@ -72,6 +74,7 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
         "Products can be referenced when creating invoices and quotes for faster data entry. " +
         "/ Crea un nuevo producto o servicio. Requiere nombre y precio unitario. " +
         "Los productos se pueden usar al crear facturas y presupuestos.",
+      annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         name: z.string().describe("Product/service name / Nombre del producto o servicio"),
         unitPrice: z.number().describe("Unit price in EUR / Precio unitario en EUR"),
@@ -110,6 +113,7 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       description:
         "Update an existing product. Only the provided fields will be changed. " +
         "/ Actualiza un producto existente. Solo se modifican los campos proporcionados.",
+      annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Product ID / ID del producto"),
         name: z.string().optional().describe("Name / Nombre"),
@@ -141,6 +145,7 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       description:
         "Permanently delete a product by its ID. This action cannot be undone. " +
         "/ Elimina permanentemente un producto por su ID. Esta accion no se puede deshacer.",
+      annotations: DELETE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Product ID / ID del producto"),
       },

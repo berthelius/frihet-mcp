@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
 
 export function registerExpenseTools(server: McpServer, client: IFrihetClient): void {
   // -- list_expenses --
@@ -17,6 +17,7 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       description:
         "List all expenses with optional pagination. " +
         "/ Lista todos los gastos con paginacion opcional.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
@@ -43,6 +44,7 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       description:
         "Get a single expense by its ID. " +
         "/ Obtiene un gasto por su ID.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Expense ID / ID del gasto"),
       },
@@ -70,6 +72,7 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
         "Useful for tracking business costs, deductible expenses, and vendor payments. " +
         "/ Registra un nuevo gasto. Requiere descripcion e importe. " +
         "Util para seguimiento de costes, gastos deducibles y pagos a proveedores.",
+      annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         description: z.string().describe("Expense description / Descripcion del gasto"),
         amount: z.number().describe("Amount in EUR / Importe en EUR"),
@@ -109,6 +112,7 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       description:
         "Update an existing expense. Only the provided fields will be changed. " +
         "/ Actualiza un gasto existente. Solo se modifican los campos proporcionados.",
+      annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Expense ID / ID del gasto"),
         description: z.string().optional().describe("Description / Descripcion"),
@@ -140,6 +144,7 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       description:
         "Permanently delete an expense by its ID. This action cannot be undone. " +
         "/ Elimina permanentemente un gasto por su ID. Esta accion no se puede deshacer.",
+      annotations: DELETE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Expense ID / ID del gasto"),
       },

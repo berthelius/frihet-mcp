@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
 
 const invoiceItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -25,6 +25,7 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
         "Returns a paginated list of invoices sorted by creation date. " +
         "/ Lista todas las facturas con paginacion opcional. " +
         "Devuelve una lista paginada de facturas ordenadas por fecha de creacion.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         limit: z
           .number()
@@ -62,6 +63,7 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       description:
         "Get a single invoice by its ID. Returns the full invoice including line items, totals, and status. " +
         "/ Obtiene una factura por su ID. Devuelve la factura completa con conceptos, totales y estado.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Invoice ID / ID de la factura"),
       },
@@ -89,6 +91,7 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
         "The invoice number is auto-generated. " +
         "/ Crea una nueva factura. Requiere nombre del cliente y al menos un concepto. " +
         "El numero de factura se genera automaticamente.",
+      annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         clientName: z.string().describe("Client/customer name / Nombre del cliente"),
         items: z
@@ -136,6 +139,7 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       description:
         "Update an existing invoice. Only the provided fields will be changed. " +
         "/ Actualiza una factura existente. Solo se modifican los campos proporcionados.",
+      annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Invoice ID / ID de la factura"),
         clientName: z.string().optional().describe("Client name / Nombre del cliente"),
@@ -174,6 +178,7 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       description:
         "Permanently delete an invoice by its ID. This action cannot be undone. " +
         "/ Elimina permanentemente una factura por su ID. Esta accion no se puede deshacer.",
+      annotations: DELETE_ANNOTATIONS,
       inputSchema: {
         id: z.string().describe("Invoice ID / ID de la factura"),
       },
@@ -199,6 +204,7 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       description:
         "Search invoices by client name. Useful for finding all invoices for a specific client. " +
         "/ Busca facturas por nombre de cliente. Util para encontrar todas las facturas de un cliente concreto.",
+      annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
         clientName: z.string().describe("Client name to search for / Nombre del cliente a buscar"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results / Resultados maximos"),

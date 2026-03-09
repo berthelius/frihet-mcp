@@ -7,7 +7,29 @@
  * so it works regardless of which FrihetApiError class threw the error.
  */
 
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import type { PaginatedResponse } from "../types.js";
+
+/* ------------------------------------------------------------------ */
+/*  Safety annotations for MCP tool registrations                      */
+/* ------------------------------------------------------------------ */
+
+export const READ_ONLY_ANNOTATIONS: ToolAnnotations = { readOnlyHint: true, idempotentHint: true, openWorldHint: false } as const;
+export const CREATE_ANNOTATIONS: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const;
+export const UPDATE_ANNOTATIONS: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
+export const DELETE_ANNOTATIONS: ToolAnnotations = { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } as const;
+
+/* ------------------------------------------------------------------ */
+/*  Response size guard                                                */
+/* ------------------------------------------------------------------ */
+
+const MAX_RESPONSE_CHARS = 80_000; // ~20,000 tokens safety margin
+
+export function truncateResponse(text: string): string {
+  if (text.length <= MAX_RESPONSE_CHARS) return text;
+  return text.slice(0, MAX_RESPONSE_CHARS) +
+    '\n\n[Response truncated. Use pagination (limit/offset) to retrieve smaller result sets.]';
+}
 
 /** Shape of errors thrown by any FrihetClient implementation. */
 interface FrihetApiErrorLike {
@@ -91,7 +113,7 @@ export function formatPaginatedResponse(
     );
   }
 
-  return lines.join("\n");
+  return truncateResponse(lines.join("\n"));
 }
 
 /**
@@ -101,5 +123,5 @@ export function formatRecord(
   label: string,
   record: Record<string, unknown>,
 ): string {
-  return `${label}:\n${JSON.stringify(record, null, 2)}`;
+  return truncateResponse(`${label}:\n${JSON.stringify(record, null, 2)}`);
 }
