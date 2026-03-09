@@ -61,7 +61,7 @@ export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
 // OAuthProvider wraps the Worker — handles OAuth 2.0 + PKCE flow
 // ---------------------------------------------------------------------------
 
-export default new OAuthProvider({
+const oauthProvider = new OAuthProvider({
   apiRoute: "/mcp",
   apiHandler: FrihetMCP.serve("/mcp"),
   defaultHandler: authHandler,
@@ -108,3 +108,16 @@ export default new OAuthProvider({
     return null;
   },
 });
+
+// Wrap OAuthProvider to handle HEAD requests gracefully (required by Anthropic)
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    if (request.method === "HEAD") {
+      return new Response(null, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return oauthProvider.fetch(request, env, ctx);
+  },
+} satisfies ExportedHandler<Env>;

@@ -26,7 +26,7 @@ app.get("/", (c) => {
     version: "1.1.0",
     description:
       "AI-native business management — invoices, expenses, clients, products, quotes",
-    docs: "https://docs.frihet.io/developers/mcp-server",
+    docs: "https://docs.frihet.io/desarrolladores/mcp-server",
     openapi: "https://api.frihet.io/openapi.yaml",
     mcp: "https://mcp.frihet.io/mcp",
     status: "https://status.frihet.io",
