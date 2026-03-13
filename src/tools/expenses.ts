@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, expenseItemOutput } from "./shared.js";
 
 export function registerExpenseTools(server: McpServer, client: IFrihetClient): void {
   // -- list_expenses --
@@ -22,12 +22,14 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
+      outputSchema: paginatedOutput(expenseItemOutput),
     },
     async ({ limit, offset }) => {
       try {
         const result = await client.listExpenses({ limit, offset });
         return {
-          content: [{ type: "text", text: formatPaginatedResponse("expenses", result) }],
+          content: [listContent(formatPaginatedResponse("expenses", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -48,12 +50,14 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Expense ID / ID del gasto"),
       },
+      outputSchema: expenseItemOutput,
     },
     async ({ id }) => {
       try {
         const result = await client.getExpense(id);
         return {
-          content: [{ type: "text", text: formatRecord("Expense", result) }],
+          content: [getContent(formatRecord("Expense", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -90,12 +94,14 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
           .optional()
           .describe("Whether the expense is tax deductible / Si el gasto es deducible fiscalmente"),
       },
+      outputSchema: expenseItemOutput,
     },
     async (input) => {
       try {
         const result = await client.createExpense(input);
         return {
-          content: [{ type: "text", text: formatRecord("Expense created", result) }],
+          content: [mutateContent(formatRecord("Expense created", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -122,12 +128,14 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
         vendor: z.string().optional().describe("Vendor / Proveedor"),
         taxDeductible: z.boolean().optional().describe("Tax deductible / Deducible"),
       },
+      outputSchema: expenseItemOutput,
     },
     async ({ id, ...data }) => {
       try {
         const result = await client.updateExpense(id, data);
         return {
-          content: [{ type: "text", text: formatRecord("Expense updated", result) }],
+          content: [mutateContent(formatRecord("Expense updated", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -148,12 +156,14 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Expense ID / ID del gasto"),
       },
+      outputSchema: deleteResultOutput,
     },
     async ({ id }) => {
       try {
         await client.deleteExpense(id);
         return {
-          content: [{ type: "text", text: `Expense ${id} deleted successfully. / Gasto ${id} eliminado correctamente.` }],
+          content: [mutateContent(`Expense ${id} deleted successfully. / Gasto ${id} eliminado correctamente.`)],
+          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);

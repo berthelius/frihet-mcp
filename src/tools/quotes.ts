@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput } from "./shared.js";
 
 const quoteItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -30,12 +30,14 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
+      outputSchema: paginatedOutput(quoteItemOutput),
     },
     async ({ limit, offset }) => {
       try {
         const result = await client.listQuotes({ limit, offset });
         return {
-          content: [{ type: "text", text: formatPaginatedResponse("quotes", result) }],
+          content: [listContent(formatPaginatedResponse("quotes", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -56,12 +58,14 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       inputSchema: {
         id: z.string().describe("Quote ID / ID del presupuesto"),
       },
+      outputSchema: quoteItemOutput,
     },
     async ({ id }) => {
       try {
         const result = await client.getQuote(id);
         return {
-          content: [{ type: "text", text: formatRecord("Quote", result) }],
+          content: [getContent(formatRecord("Quote", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -97,12 +101,14 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
           .optional()
           .describe("Quote status (default: draft) / Estado del presupuesto"),
       },
+      outputSchema: quoteItemOutput,
     },
     async (input) => {
       try {
         const result = await client.createQuote(input);
         return {
-          content: [{ type: "text", text: formatRecord("Quote created", result) }],
+          content: [mutateContent(formatRecord("Quote created", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -131,12 +137,14 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
           .optional()
           .describe("Status / Estado"),
       },
+      outputSchema: quoteItemOutput,
     },
     async ({ id, ...data }) => {
       try {
         const result = await client.updateQuote(id, data);
         return {
-          content: [{ type: "text", text: formatRecord("Quote updated", result) }],
+          content: [mutateContent(formatRecord("Quote updated", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -157,12 +165,14 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       inputSchema: {
         id: z.string().describe("Quote ID / ID del presupuesto"),
       },
+      outputSchema: deleteResultOutput,
     },
     async ({ id }) => {
       try {
         await client.deleteQuote(id);
         return {
-          content: [{ type: "text", text: `Quote ${id} deleted successfully. / Presupuesto ${id} eliminado correctamente.` }],
+          content: [mutateContent(`Quote ${id} deleted successfully. / Presupuesto ${id} eliminado correctamente.`)],
+          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);

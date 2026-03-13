@@ -15,6 +15,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { FrihetClient } from "./client.js";
 import { registerAllTools } from "./tools/register-all.js";
+import { registerAllResources } from "./resources/register-all.js";
+import { registerAllPrompts } from "./prompts/register-all.js";
 
 function main(): void {
   const apiKey = process.env.FRIHET_API_KEY;
@@ -30,15 +32,54 @@ function main(): void {
   }
 
   const baseUrl = process.env.FRIHET_API_URL;
+
+  if (baseUrl !== undefined) {
+    let parsed: URL;
+    try {
+      parsed = new URL(baseUrl);
+    } catch {
+      console.error(
+        `Error: FRIHET_API_URL is not a valid URL: "${baseUrl}"\n` +
+          "It must be a valid https:// URL with a frihet.io hostname.\n",
+      );
+      process.exit(1);
+    }
+
+    if (parsed.protocol !== "https:") {
+      console.error(
+        `Error: FRIHET_API_URL must use https:// (got "${parsed.protocol}").\n`,
+      );
+      process.exit(1);
+    }
+
+    if (!parsed.hostname.endsWith("frihet.io")) {
+      console.error(
+        `Error: FRIHET_API_URL hostname must be under frihet.io (got "${parsed.hostname}").\n` +
+          "This prevents redirection to untrusted servers.\n",
+      );
+      process.exit(1);
+    }
+  }
+
   const client = new FrihetClient(apiKey, baseUrl);
 
   const server = new McpServer({
     name: "frihet-erp",
-    version: "1.0.0",
+    version: "1.2.0",
+    description:
+      "AI-native MCP server for Frihet ERP — invoices, expenses, clients, products, quotes, and webhooks. " +
+      "Provides 31 tools, 5 resources (tax rates, calendar, expense categories, invoice statuses, API schema), " +
+      "and 5 workflow prompts for business management with full Spanish tax compliance (IVA, IGIC, IPSI).",
   });
 
   // Register all 31 tools
   registerAllTools(server, client);
+
+  // Register 5 static resources (tax rates, calendar, categories, statuses, API schema)
+  registerAllResources(server);
+
+  // Register 5 workflow prompts (monthly close, onboard client, tax prep, overdue follow-up, expense batch)
+  registerAllPrompts(server);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();

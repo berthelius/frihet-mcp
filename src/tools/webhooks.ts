@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, webhookItemOutput } from "./shared.js";
 
 export function registerWebhookTools(server: McpServer, client: IFrihetClient): void {
   // -- list_webhooks --
@@ -22,12 +22,14 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
+      outputSchema: paginatedOutput(webhookItemOutput),
     },
     async ({ limit, offset }) => {
       try {
         const result = await client.listWebhooks({ limit, offset });
         return {
-          content: [{ type: "text", text: formatPaginatedResponse("webhooks", result) }],
+          content: [listContent(formatPaginatedResponse("webhooks", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -48,12 +50,14 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Webhook ID / ID del webhook"),
       },
+      outputSchema: webhookItemOutput,
     },
     async ({ id }) => {
       try {
         const result = await client.getWebhook(id);
         return {
-          content: [{ type: "text", text: formatRecord("Webhook", result) }],
+          content: [getContent(formatRecord("Webhook", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -93,12 +97,14 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
             "Signing secret for payload verification / Secreto para verificar las notificaciones",
           ),
       },
+      outputSchema: webhookItemOutput,
     },
     async (input) => {
       try {
         const result = await client.createWebhook(input);
         return {
-          content: [{ type: "text", text: formatRecord("Webhook created", result) }],
+          content: [mutateContent(formatRecord("Webhook created", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -123,12 +129,14 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
         active: z.boolean().optional().describe("Active / Activo"),
         secret: z.string().optional().describe("Signing secret / Secreto"),
       },
+      outputSchema: webhookItemOutput,
     },
     async ({ id, ...data }) => {
       try {
         const result = await client.updateWebhook(id, data);
         return {
-          content: [{ type: "text", text: formatRecord("Webhook updated", result) }],
+          content: [mutateContent(formatRecord("Webhook updated", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -149,12 +157,14 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Webhook ID / ID del webhook"),
       },
+      outputSchema: deleteResultOutput,
     },
     async ({ id }) => {
       try {
         await client.deleteWebhook(id);
         return {
-          content: [{ type: "text", text: `Webhook ${id} deleted successfully. / Webhook ${id} eliminado correctamente.` }],
+          content: [mutateContent(`Webhook ${id} deleted successfully. / Webhook ${id} eliminado correctamente.`)],
+          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);

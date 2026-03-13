@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput } from "./shared.js";
 
 const invoiceItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -41,12 +41,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .optional()
           .describe("Number of results to skip / Resultados a saltar"),
       },
+      outputSchema: paginatedOutput(invoiceItemOutput),
     },
     async ({ limit, offset }) => {
       try {
         const result = await client.listInvoices({ limit, offset });
         return {
-          content: [{ type: "text", text: formatPaginatedResponse("invoices", result) }],
+          content: [listContent(formatPaginatedResponse("invoices", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -67,12 +69,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Invoice ID / ID de la factura"),
       },
+      outputSchema: invoiceItemOutput,
     },
     async ({ id }) => {
       try {
         const result = await client.getInvoice(id);
         return {
-          content: [{ type: "text", text: formatRecord("Invoice", result) }],
+          content: [getContent(formatRecord("Invoice", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -117,12 +121,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .optional()
           .describe("Tax rate percentage (e.g. 21 for 21% IVA) / Porcentaje de impuesto"),
       },
+      outputSchema: invoiceItemOutput,
     },
     async (input) => {
       try {
         const result = await client.createInvoice(input);
         return {
-          content: [{ type: "text", text: formatRecord("Invoice created", result) }],
+          content: [mutateContent(formatRecord("Invoice created", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -156,12 +162,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
         notes: z.string().optional().describe("Notes / Notas"),
         taxRate: z.number().min(0).max(100).optional().describe("Tax rate % / IVA %"),
       },
+      outputSchema: invoiceItemOutput,
     },
     async ({ id, ...data }) => {
       try {
         const result = await client.updateInvoice(id, data);
         return {
-          content: [{ type: "text", text: formatRecord("Invoice updated", result) }],
+          content: [mutateContent(formatRecord("Invoice updated", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -182,12 +190,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Invoice ID / ID de la factura"),
       },
+      outputSchema: deleteResultOutput,
     },
     async ({ id }) => {
       try {
         await client.deleteInvoice(id);
         return {
-          content: [{ type: "text", text: `Invoice ${id} deleted successfully. / Factura ${id} eliminada correctamente.` }],
+          content: [mutateContent(`Invoice ${id} deleted successfully. / Factura ${id} eliminada correctamente.`)],
+          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -210,17 +220,16 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
         limit: z.number().int().min(1).max(100).optional().describe("Max results / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
+      outputSchema: paginatedOutput(invoiceItemOutput),
     },
     async ({ clientName, limit, offset }) => {
       try {
         const result = await client.searchInvoices(clientName, { limit, offset });
         return {
           content: [
-            {
-              type: "text",
-              text: formatPaginatedResponse(`invoices matching "${clientName}"`, result),
-            },
+            listContent(formatPaginatedResponse(`invoices matching "${clientName}"`, result)),
           ],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);

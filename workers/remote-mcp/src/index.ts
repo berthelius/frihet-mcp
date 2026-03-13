@@ -5,7 +5,7 @@
  * McpAgent (Durable Objects) for per-session MCP servers.
  *
  * Backward compatible: existing fri_* API key auth continues to work
- * via resolveExternalToken (Bearer, X-API-Key, query param).
+ * via resolveExternalToken (Bearer, X-API-Key header).
  *
  * Endpoint: https://mcp.frihet.io/mcp
  * OAuth metadata: https://mcp.frihet.io/.well-known/oauth-authorization-server
@@ -15,6 +15,8 @@ import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
 import { registerAllTools } from "../../../src/tools/register-all.js";
+import { registerAllResources } from "../../../src/resources/register-all.js";
+import { registerAllPrompts } from "../../../src/prompts/register-all.js";
 import { FrihetClient } from "./client.js";
 import { authHandler } from "./auth-handler.js";
 
@@ -46,14 +48,16 @@ export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
       throw new Error("No API key in auth context");
     }
     const client = new FrihetClient(apiKey);
+
     // The worker and root project both use @modelcontextprotocol/sdk 1.26.0 but
     // TypeScript sees them as separate types due to different node_modules paths.
     // The private property mismatch prevents direct cast, so we bridge via unknown.
     // Structurally identical at runtime — this is safe.
-    registerAllTools(
-      this.server as unknown as Parameters<typeof registerAllTools>[0],
-      client,
-    );
+    const server = this.server as unknown as Parameters<typeof registerAllTools>[0];
+
+    registerAllTools(server, client);
+    registerAllResources(server);
+    registerAllPrompts(server);
   }
 }
 
@@ -93,15 +97,6 @@ const oauthProvider = new OAuthProvider({
     if (xApiKey?.startsWith("fri_")) {
       return {
         props: { apiKey: xApiKey, locale: "es" } as AuthProps,
-      };
-    }
-
-    // Query param (deprecated)
-    const url = new URL(request.url);
-    const queryKey = url.searchParams.get("api_key");
-    if (queryKey?.startsWith("fri_")) {
-      return {
-        props: { apiKey: queryKey, locale: "es" } as AuthProps,
       };
     }
 

@@ -1,7 +1,7 @@
 {
   "name": "@frihet/mcp-server",
-  "version": "1.1.0",
-  "description": "AI-native MCP server for business management — invoices, expenses, clients, products, quotes, webhooks. 31 tools. Works with Claude, Cursor, Windsurf, Cline.",
+  "version": "1.2.0",
+  "description": "AI-native MCP server for business management \u2014 invoices, expenses, clients, products, quotes, webhooks. 31 tools. Works with Claude, Cursor, Windsurf, Cline.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
@@ -53,7 +53,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0"
+    "@modelcontextprotocol/sdk": "^1.27.0"
   },
   "peerDependencies": {
     "zod": ">=3.25.0"

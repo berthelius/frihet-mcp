@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, productItemOutput } from "./shared.js";
 
 export function registerProductTools(server: McpServer, client: IFrihetClient): void {
   // -- list_products --
@@ -24,12 +24,14 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
+      outputSchema: paginatedOutput(productItemOutput),
     },
     async ({ limit, offset }) => {
       try {
         const result = await client.listProducts({ limit, offset });
         return {
-          content: [{ type: "text", text: formatPaginatedResponse("products", result) }],
+          content: [listContent(formatPaginatedResponse("products", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -50,12 +52,14 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Product ID / ID del producto"),
       },
+      outputSchema: productItemOutput,
     },
     async ({ id }) => {
       try {
         const result = await client.getProduct(id);
         return {
-          content: [{ type: "text", text: formatRecord("Product", result) }],
+          content: [getContent(formatRecord("Product", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -91,12 +95,14 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
           .describe("Default tax rate % (e.g. 21 for 21% IVA) / IVA por defecto"),
         sku: z.string().optional().describe("SKU / Reference code / Codigo de referencia"),
       },
+      outputSchema: productItemOutput,
     },
     async (input) => {
       try {
         const result = await client.createProduct(input);
         return {
-          content: [{ type: "text", text: formatRecord("Product created", result) }],
+          content: [mutateContent(formatRecord("Product created", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -123,12 +129,14 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
         taxRate: z.number().min(0).max(100).optional().describe("Tax rate % / IVA %"),
         sku: z.string().optional().describe("SKU / Referencia"),
       },
+      outputSchema: productItemOutput,
     },
     async ({ id, ...data }) => {
       try {
         const result = await client.updateProduct(id, data);
         return {
-          content: [{ type: "text", text: formatRecord("Product updated", result) }],
+          content: [mutateContent(formatRecord("Product updated", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -149,12 +157,14 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       inputSchema: {
         id: z.string().describe("Product ID / ID del producto"),
       },
+      outputSchema: deleteResultOutput,
     },
     async ({ id }) => {
       try {
         await client.deleteProduct(id);
         return {
-          content: [{ type: "text", text: `Product ${id} deleted successfully. / Producto ${id} eliminado correctamente.` }],
+          content: [mutateContent(`Product ${id} deleted successfully. / Producto ${id} eliminado correctamente.`)],
+          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);

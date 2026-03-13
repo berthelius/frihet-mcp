@@ -204,17 +204,24 @@ export function getLoginPage(opts: {
     </div>
   </div>
 
+  <script type="application/json" id="server-data">${JSON.stringify({
+    clientId: opts.clientId,
+    stateKey: opts.stateKey,
+    firebaseProjectId: opts.firebaseProjectId,
+  })}<\/script>
   <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"><\/script>
   <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"><\/script>
   <script>
+    var SERVER_DATA = JSON.parse(document.getElementById("server-data").textContent);
+
     firebase.initializeApp({
       apiKey: "AIzaSyAZLelo5vQNvTl0oYqr0vAu19HAabMaVLk",
       authDomain: "auth.frihet.io",
-      projectId: "${opts.firebaseProjectId}",
+      projectId: SERVER_DATA.firebaseProjectId,
     });
 
-    var STATE_KEY = "${opts.stateKey}";
-    document.getElementById("clientId").textContent = "${opts.clientId}";
+    var STATE_KEY = SERVER_DATA.stateKey;
+    document.getElementById("clientId").textContent = SERVER_DATA.clientId;
 
     function showError(msg) {
       var el = document.getElementById("error");

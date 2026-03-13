@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS } from "./shared.js";
+import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, clientItemOutput } from "./shared.js";
 
 const addressSchema = z
   .object({
@@ -34,12 +34,14 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
+      outputSchema: paginatedOutput(clientItemOutput),
     },
     async ({ limit, offset }) => {
       try {
         const result = await client.listClients({ limit, offset });
         return {
-          content: [{ type: "text", text: formatPaginatedResponse("clients", result) }],
+          content: [listContent(formatPaginatedResponse("clients", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -60,12 +62,14 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       inputSchema: {
         id: z.string().describe("Client ID / ID del cliente"),
       },
+      outputSchema: clientItemOutput,
     },
     async ({ id }) => {
       try {
         const result = await client.getClient(id);
         return {
-          content: [{ type: "text", text: formatRecord("Client", result) }],
+          content: [getContent(formatRecord("Client", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -92,12 +96,14 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         taxId: z.string().optional().describe("Tax ID (NIF/CIF/VAT) / NIF o CIF"),
         address: addressSchema,
       },
+      outputSchema: clientItemOutput,
     },
     async (input) => {
       try {
         const result = await client.createClient(input);
         return {
-          content: [{ type: "text", text: formatRecord("Client created", result) }],
+          content: [mutateContent(formatRecord("Client created", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -123,12 +129,14 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         taxId: z.string().optional().describe("Tax ID / NIF/CIF"),
         address: addressSchema,
       },
+      outputSchema: clientItemOutput,
     },
     async ({ id, ...data }) => {
       try {
         const result = await client.updateClient(id, data);
         return {
-          content: [{ type: "text", text: formatRecord("Client updated", result) }],
+          content: [mutateContent(formatRecord("Client updated", result))],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);
@@ -151,12 +159,14 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       inputSchema: {
         id: z.string().describe("Client ID / ID del cliente"),
       },
+      outputSchema: deleteResultOutput,
     },
     async ({ id }) => {
       try {
         await client.deleteClient(id);
         return {
-          content: [{ type: "text", text: `Client ${id} deleted successfully. / Cliente ${id} eliminado correctamente.` }],
+          content: [mutateContent(`Client ${id} deleted successfully. / Cliente ${id} eliminado correctamente.`)],
+          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return handleToolError(error);

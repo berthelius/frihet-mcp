@@ -17,6 +17,8 @@
     "src/**/*",
     "worker-configuration.d.ts",
     "../../src/tools/**/*",
+    "../../src/resources/**/*",
+    "../../src/prompts/**/*",
     "../../src/client-interface.ts",
     "../../src/types.ts"
   ],

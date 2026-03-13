@@ -7,7 +7,8 @@
  * so it works regardless of which FrihetApiError class threw the error.
  */
 
-import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+import type { ToolAnnotations, Annotations } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod/v4";
 import type { PaginatedResponse } from "../types.js";
 
 /* ------------------------------------------------------------------ */
@@ -18,6 +19,44 @@ export const READ_ONLY_ANNOTATIONS: ToolAnnotations = { readOnlyHint: true, dest
 export const CREATE_ANNOTATIONS: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const;
 export const UPDATE_ANNOTATIONS: ToolAnnotations = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 export const DELETE_ANNOTATIONS: ToolAnnotations = { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } as const;
+
+/* ------------------------------------------------------------------ */
+/*  Content annotations for tool responses                             */
+/* ------------------------------------------------------------------ */
+
+/** List operations: useful to both user and assistant for navigation, medium priority. */
+export const LIST_CONTENT_ANNOTATIONS: Annotations = {
+  audience: ["user", "assistant"],
+  priority: 0.5,
+} as const;
+
+/** Get/read operations: useful to both, higher priority as specifically requested data. */
+export const GET_CONTENT_ANNOTATIONS: Annotations = {
+  audience: ["user", "assistant"],
+  priority: 0.7,
+} as const;
+
+/** Mutating operations (create/update/delete): primarily for the user, highest priority. */
+export const MUTATE_CONTENT_ANNOTATIONS: Annotations = {
+  audience: ["user"],
+  priority: 1.0,
+} as const;
+
+/** Error responses: always high priority, always for the user. */
+export const ERROR_CONTENT_ANNOTATIONS: Annotations = {
+  audience: ["user"],
+  priority: 1.0,
+} as const;
+
+/* ------------------------------------------------------------------ */
+/*  Content block type                                                 */
+/* ------------------------------------------------------------------ */
+
+export interface AnnotatedTextContent {
+  type: "text";
+  text: string;
+  annotations?: Annotations;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Response size guard                                                */
@@ -49,13 +88,16 @@ function isFrihetApiError(error: unknown): error is FrihetApiErrorLike {
 }
 
 /**
- * Maps an error to a user-friendly MCP tool response.
+ * Maps an error to a user-friendly MCP tool response with error annotations.
  */
 export function handleToolError(error: unknown): {
-  content: Array<{ type: "text"; text: string }>;
+  content: AnnotatedTextContent[];
   isError: true;
 } {
   if (isFrihetApiError(error)) {
+    // Log raw error details to stderr for debugging — never expose to LLM
+    console.error(`[Frihet API Error] ${error.statusCode} ${error.errorCode}: ${error.message}`);
+
     const messages: Record<number, string> = {
       400: "Bad request. Check your input parameters. / Solicitud incorrecta. Revisa los parametros.",
       401: "Authentication failed. Check your API key. / Autenticacion fallida. Revisa tu API key.",
@@ -68,24 +110,25 @@ export function handleToolError(error: unknown): {
     };
 
     const friendlyMessage =
-      messages[error.statusCode] ?? `API error ${error.statusCode}: ${error.message}`;
+      messages[error.statusCode] ?? `API error ${error.statusCode}. Contact support if this persists.`;
 
     return {
       content: [
         {
           type: "text",
-          text: `Error: ${friendlyMessage}${error.message ? `\nDetails: ${error.message}` : ""}`,
+          text: `Error: ${friendlyMessage}`,
+          annotations: ERROR_CONTENT_ANNOTATIONS,
         },
       ],
       isError: true,
     };
   }
 
-  const message =
-    error instanceof Error ? error.message : "An unexpected error occurred.";
+  // Log raw error to stderr for debugging — return generic message to LLM
+  console.error("[Frihet MCP Error]", error instanceof Error ? error.stack ?? error.message : error);
 
   return {
-    content: [{ type: "text", text: `Error: ${message}` }],
+    content: [{ type: "text", text: "Error: An unexpected error occurred. Contact support if this persists.", annotations: ERROR_CONTENT_ANNOTATIONS }],
     isError: true,
   };
 }
@@ -125,3 +168,131 @@ export function formatRecord(
 ): string {
   return truncateResponse(`${label}:\n${JSON.stringify(record, null, 2)}`);
 }
+
+/**
+ * Builds an annotated content block for list/search responses.
+ */
+export function listContent(text: string): AnnotatedTextContent {
+  return { type: "text", text, annotations: LIST_CONTENT_ANNOTATIONS };
+}
+
+/**
+ * Builds an annotated content block for get/read responses.
+ */
+export function getContent(text: string): AnnotatedTextContent {
+  return { type: "text", text, annotations: GET_CONTENT_ANNOTATIONS };
+}
+
+/**
+ * Builds an annotated content block for create/update/delete responses.
+ */
+export function mutateContent(text: string): AnnotatedTextContent {
+  return { type: "text", text, annotations: MUTATE_CONTENT_ANNOTATIONS };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Output schemas (MCP spec 2025-11-25: outputSchema + structuredContent) */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Wraps an item schema in a paginated envelope for list/search tools.
+ */
+export function paginatedOutput<T extends z.ZodType>(itemSchema: T) {
+  return z.object({
+    data: z.array(itemSchema),
+    total: z.number(),
+    limit: z.number(),
+    offset: z.number(),
+  });
+}
+
+/** Schema for delete operation results. */
+export const deleteResultOutput = z.object({
+  success: z.boolean(),
+  id: z.string(),
+});
+
+/* --- Per-resource item schemas ------------------------------------ */
+
+const lineItemSchema = z.object({
+  description: z.string(),
+  quantity: z.number(),
+  unitPrice: z.number(),
+});
+
+export const invoiceItemOutput = z.object({
+  id: z.string(),
+  clientName: z.string(),
+  items: z.array(lineItemSchema),
+  status: z.string().optional(),
+  dueDate: z.string().optional(),
+  notes: z.string().optional(),
+  taxRate: z.number().optional(),
+  total: z.number().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+export const expenseItemOutput = z.object({
+  id: z.string(),
+  description: z.string(),
+  amount: z.number(),
+  category: z.string().optional(),
+  date: z.string().optional(),
+  vendor: z.string().optional(),
+  taxDeductible: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+const addressOutputSchema = z.object({
+  street: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+}).optional();
+
+export const clientItemOutput = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  taxId: z.string().optional(),
+  address: addressOutputSchema,
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+export const productItemOutput = z.object({
+  id: z.string(),
+  name: z.string(),
+  unitPrice: z.number(),
+  description: z.string().optional(),
+  unit: z.string().optional(),
+  taxRate: z.number().optional(),
+  sku: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+export const quoteItemOutput = z.object({
+  id: z.string(),
+  clientName: z.string(),
+  items: z.array(lineItemSchema),
+  validUntil: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.string().optional(),
+  total: z.number().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+export const webhookItemOutput = z.object({
+  id: z.string(),
+  url: z.string(),
+  events: z.array(z.string()),
+  active: z.boolean().optional(),
+  secret: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
