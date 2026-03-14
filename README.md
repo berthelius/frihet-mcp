@@ -8,10 +8,14 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@frihet/mcp-server"><img src="https://img.shields.io/npm/v/@frihet/mcp-server?style=flat&color=18181b&labelColor=09090b" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/@frihet/mcp-server"><img src="https://img.shields.io/npm/v/@frihet/mcp-server?style=flat&color=18181b&labelColor=09090b" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@frihet/mcp-server"><img src="https://img.shields.io/npm/dm/@frihet/mcp-server?style=flat&color=18181b&labelColor=09090b&label=downloads" alt="npm downloads"></a>
+  <a href="https://smithery.ai/server/frihet/frihet-mcp"><img src="https://smithery.ai/badge/frihet/frihet-mcp" alt="Smithery installs"></a>
+  <a href="https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet"><img src="https://img.shields.io/badge/MCP-Registry-18181b?style=flat&labelColor=09090b" alt="MCP Registry"></a>
   <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
-  <a href="https://smithery.ai/server/@frihet/mcp-server"><img src="https://img.shields.io/badge/smithery-listed-18181b?style=flat&labelColor=09090b" alt="smithery"></a>
-  <a href="https://frihet.io"><img src="https://img.shields.io/badge/frihet.io-ERP-18181b?style=flat&labelColor=09090b" alt="frihet"></a>
+  <a href="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b"><img src="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b" alt="31 tools"></a>
+  <a href="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b"><img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-18181b?style=flat&labelColor=09090b" alt="TypeScript"></a>
 </p>
 
 ---
