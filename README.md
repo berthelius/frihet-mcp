@@ -13,8 +13,8 @@
   <a href="https://smithery.ai/server/frihet/frihet-mcp"><img src="https://smithery.ai/badge/frihet/frihet-mcp" alt="Smithery installs"></a>
   <a href="https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet"><img src="https://img.shields.io/badge/MCP-Registry-18181b?style=flat&labelColor=09090b" alt="MCP Registry"></a>
   <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
-  <a href="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b"><img src="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b" alt="31 tools"></a>
-  <a href="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b"><img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18"></a>
+  <img src="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b" alt="31 tools">
+  <img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18">
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-18181b?style=flat&labelColor=09090b" alt="TypeScript"></a>
 </p>
 
@@ -22,26 +22,24 @@
 
 ## What is this
 
-An MCP server that connects your AI assistant to [Frihet ERP](https://frihet.io). Create invoices by talking. Query expenses in natural language. Manage your entire business from your IDE.
+An MCP server that connects your AI assistant to [Frihet](https://frihet.io). Create invoices by talking. Query expenses in natural language. Manage your entire business from your IDE.
 
 ```
 You:     "Create an invoice for TechStart SL, 40 hours of consulting at 75 EUR/hour, due March 1st"
 Claude:  Done. Invoice INV-2026-089 created. Total: 3,000.00 EUR + 21% IVA = 3,630.00 EUR.
 ```
 
-31 tools. 5 resources. 5 prompts. Structured output. Zero boilerplate.
+31 tools. 5 resources. 5 prompts. Structured output on every tool. Zero boilerplate.
 
 ---
 
 ## Install
 
-### Universal (30+ agents — Claude Code, Cursor, Copilot, Codex, Windsurf, Gemini CLI, and more)
+### One-line (Claude Code, Cursor, Copilot, Codex, Windsurf, Gemini CLI, and more)
 
 ```bash
 npx skills add Frihet-io/frihet-mcp
 ```
-
-### Per-tool configuration
 
 ### Claude Code / Claude Desktop
 
@@ -72,7 +70,9 @@ The JSON config is identical for all tools. Only the file path changes.
 
 ### Remote (no install)
 
-If you prefer not to install anything locally, use the hosted endpoint at `mcp.frihet.io`:
+Use the hosted endpoint at `mcp.frihet.io` -- zero local dependencies, runs on Cloudflare Workers.
+
+**With API key:**
 
 ```json
 {
@@ -88,7 +88,9 @@ If you prefer not to install anything locally, use the hosted endpoint at `mcp.f
 }
 ```
 
-Same 31 tools, zero local dependencies. Runs on Cloudflare Workers.
+**With OAuth 2.0 + PKCE** (browser-based login, no API key needed):
+
+Clients that support OAuth (Claude Desktop, Smithery, etc.) can connect directly to `https://mcp.frihet.io/mcp` and authenticate via browser. The server implements the full OAuth 2.1 authorization code flow with PKCE.
 
 ### Get your API key
 
@@ -144,9 +146,9 @@ Talk to your ERP. These are real prompts, not marketing copy.
 
 ---
 
-## Tools reference
+## Tools (31)
 
-### Invoices / Facturas
+### Invoices (6)
 
 | Tool | What it does |
 |------|-------------|
@@ -157,7 +159,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 | `delete_invoice` | Permanently delete an invoice |
 | `search_invoices` | Find invoices by client name |
 
-### Expenses / Gastos
+### Expenses (5)
 
 | Tool | What it does |
 |------|-------------|
@@ -167,7 +169,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 | `update_expense` | Modify an expense |
 | `delete_expense` | Delete an expense |
 
-### Clients / Clientes
+### Clients (5)
 
 | Tool | What it does |
 |------|-------------|
@@ -177,7 +179,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 | `update_client` | Update client info |
 | `delete_client` | Remove a client |
 
-### Products / Productos
+### Products (5)
 
 | Tool | What it does |
 |------|-------------|
@@ -187,7 +189,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 | `update_product` | Update pricing or details |
 | `delete_product` | Remove a product |
 
-### Quotes / Presupuestos
+### Quotes (5)
 
 | Tool | What it does |
 |------|-------------|
@@ -197,7 +199,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 | `update_quote` | Modify a quote |
 | `delete_quote` | Delete a quote |
 
-### Webhooks
+### Webhooks (5)
 
 | Tool | What it does |
 |------|-------------|
@@ -206,6 +208,36 @@ Talk to your ERP. These are real prompts, not marketing copy.
 | `create_webhook` | Register a new webhook endpoint |
 | `update_webhook` | Modify events or URL |
 | `delete_webhook` | Remove a webhook |
+
+All 31 tools return **structured output** via `outputSchema` -- typed JSON, not raw text. List tools return paginated results (`{ data, total, limit, offset }`).
+
+---
+
+## Resources (5)
+
+Static context the AI can read without making API calls.
+
+| Resource | URI | What it provides |
+|----------|-----|-----------------|
+| API Schema | `frihet://api/schema` | OpenAPI summary: endpoints, auth, rate limits, pagination, error codes |
+| Tax Rates | `frihet://tax/rates` | Tax rates by Spanish fiscal zone: IVA, IGIC, IPSI, EU reverse charge, IRPF |
+| Tax Calendar | `frihet://tax/calendar` | Quarterly filing deadlines: Modelo 303, 130, 390, 420, VeriFactu timeline |
+| Expense Categories | `frihet://config/expense-categories` | 8 categories with deductibility rules, IVA treatment, amortization |
+| Invoice Statuses | `frihet://config/invoice-statuses` | Status flow (draft > sent > paid/overdue > cancelled), transition rules, webhook events |
+
+---
+
+## Prompts (5)
+
+Pre-built workflows the AI can execute as guided multi-step operations.
+
+| Prompt | What it does | Arguments |
+|--------|-------------|-----------|
+| `monthly-close` | Close the month: review unpaid invoices, categorize expenses, check tax obligations, generate summary | `month?` (YYYY-MM) |
+| `onboard-client` | Set up a new client with correct tax rates by location, optionally create a welcome quote | `clientName`, `country?`, `region?` |
+| `quarterly-tax-prep` | Prepare quarterly tax filing: calculate IVA/IGIC, identify deductibles, preview Modelo 303/130/420 | `quarter?`, `fiscalZone?` |
+| `overdue-followup` | Find overdue invoices, draft follow-up messages, suggest payment reminders | -- |
+| `expense-batch` | Process expenses in bulk: categorize, apply tax rates, flag missing receipts | `fiscalZone?` |
 
 ---
 
@@ -217,19 +249,21 @@ Your AI assistant          frihet-mcp           Frihet API
       |-- "create invoice" --> |                    |
       |                        |-- POST /invoices ->|
       |                        |<-- 201 Created ----|
-      |<-- "Invoice created" --|                    |
+      |<-- structured JSON --- |                    |
 ```
 
-The MCP server translates natural language tool calls into REST API requests. It handles authentication, rate limiting (automatic retry on 429), pagination, and error mapping. You just talk.
+The server translates tool calls into REST API requests. It handles authentication, rate limiting (automatic retry with backoff on 429), pagination, and error mapping.
+
+Two transports:
+- **stdio** (local) -- `npx @frihet/mcp-server` with `FRIHET_API_KEY`
+- **Streamable HTTP** (remote) -- `https://mcp.frihet.io/mcp` with Bearer token or OAuth 2.0+PKCE
 
 ### Environment variables
 
 | Variable | Required | Default |
 |----------|----------|---------|
-| `FRIHET_API_KEY` | Yes | -- |
+| `FRIHET_API_KEY` | Yes (stdio) | -- |
 | `FRIHET_API_URL` | No | `https://api.frihet.io/v1` |
-
-`FRIHET_API_URL` is useful if you self-host or want to point to a staging environment.
 
 ---
 
@@ -243,20 +277,25 @@ The MCP server translates natural language tool calls into REST API requests. It
 | Webhook payload | 100 KB max |
 | Webhooks per account | 20 max |
 
-Rate limiting is handled automatically with exponential backoff. You don't need to think about it.
+Rate limiting is handled automatically with exponential backoff.
 
 ---
 
 ## Claude Code Skill
 
-Beyond raw MCP tools, Frihet ships a **Claude Code skill** that adds business intelligence: Spanish tax context, workflow recipes (monthly close, quarterly tax prep, overdue follow-up), formatted financial reports, and natural language commands.
+Beyond raw MCP tools, this repo includes a **Claude Code skill** that adds business context: Spanish tax rules, workflow recipes, financial reports, and natural language commands.
 
 ### Install the skill
 
 ```bash
-# Clone and symlink
 git clone https://github.com/Frihet-io/frihet-mcp.git
 ln -s "$(pwd)/frihet-mcp/skill" ~/.claude/skills/frihet
+```
+
+Or with the universal installer:
+
+```bash
+npx skills add Frihet-io/frihet-mcp
 ```
 
 ### Commands
@@ -272,7 +311,7 @@ ln -s "$(pwd)/frihet-mcp/skill" ~/.claude/skills/frihet
 | `/frihet webhooks` | Configure automation triggers |
 | `/frihet setup` | Guided setup and connection test |
 
-The skill knows about IVA rates, IRPF retention, Modelo 303 prep, expense deductibility rules, and Verifactu compliance. It's your accountant in the terminal.
+The skill knows about IVA rates, IRPF retention, Modelo 303 prep, expense deductibility rules, and VeriFactu compliance.
 
 Full documentation: [docs.frihet.io/desarrolladores/skill-claude-code](https://docs.frihet.io/desarrolladores/skill-claude-code)
 
@@ -301,27 +340,31 @@ npx @modelcontextprotocol/inspector node dist/index.js
 
 ---
 
-## Why Frihet MCP
+## Contributing
 
-| | Frihet | Holded | Billin | Quipu | Anfix |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Official MCP server | **Yes** | No (third-party) | No | No | No |
-| Claude / Cursor / Windsurf | **Yes** | No | No | No | No |
-| Public REST API | **Yes** | Yes | Limited | Yes | No |
-| Webhooks with HMAC verification | **Yes** | No | No | No | No |
-| AI assistant built-in | **Yes** | No | No | No | No |
-| Open source tooling | **Yes** | No | No | No | No |
+Contributions are welcome. Please open an issue first to discuss what you'd like to change.
 
-The first business management platform with an official MCP server. No other ERP has this.
+```bash
+git clone https://github.com/Frihet-io/frihet-mcp.git
+cd frihet-mcp
+npm install
+npm run build   # must pass before submitting
+```
 
 ---
 
 ## Links
 
-- [Frihet ERP](https://frihet.io) -- The product
-- [API documentation](https://docs.frihet.io/desarrolladores/api-rest) -- REST API reference
-- [Webhook documentation](https://docs.frihet.io/desarrolladores/webhooks) -- Events, signatures, retries
+- [Frihet](https://frihet.io) -- The product
+- [Documentation](https://docs.frihet.io) -- Full docs
+- [API reference](https://docs.frihet.io/desarrolladores/api-rest) -- REST API
+- [MCP server docs](https://docs.frihet.io/desarrolladores/mcp-server) -- Setup guides, troubleshooting
+- [Webhook docs](https://docs.frihet.io/desarrolladores/webhooks) -- Events, signatures, retries
+- [npm](https://www.npmjs.com/package/@frihet/mcp-server) -- Package registry
+- [MCP Registry](https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet) -- Official MCP Registry
+- [Smithery](https://smithery.ai/server/frihet/frihet-mcp) -- Smithery marketplace
 - [Remote endpoint](https://mcp.frihet.io) -- Hosted MCP server (Cloudflare Workers)
+- [OpenAPI spec](https://api.frihet.io/openapi.yaml) -- Machine-readable API definition
 - [MCP specification](https://modelcontextprotocol.io) -- The protocol
 
 ---
@@ -330,4 +373,4 @@ The first business management platform with an official MCP server. No other ERP
 
 MIT. See [LICENSE](./LICENSE).
 
-Built by [BRTHLS](https://brthls.com).
+Built by [Frihet](https://frihet.io) ([BRTHLS](https://brthls.com)).
