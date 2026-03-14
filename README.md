@@ -373,4 +373,4 @@ npm run build   # must pass before submitting
 
 MIT. See [LICENSE](./LICENSE).
 
-Built by [Frihet](https://frihet.io) ([BRTHLS](https://brthls.com)).
+Built by [Frihet](https://frihet.io).
