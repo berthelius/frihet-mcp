@@ -37,12 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/berthelius/frihet-mcp.git"
+    "url": "git+https://github.com/Frihet-io/frihet-mcp.git"
   },
   "mcpName": "io.github.berthelius/frihet",
-  "homepage": "https://docs.frihet.io/desarrolladores/mcp-server",
+  "homepage": "https://github.com/Frihet-io/frihet-mcp#readme",
   "bugs": {
-    "url": "https://github.com/berthelius/frihet-mcp/issues"
+    "url": "https://github.com/Frihet-io/frihet-mcp/issues"
   },
   "engines": {
     "node": ">=18"

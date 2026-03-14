@@ -194,6 +194,6 @@ For full error code reference and pagination patterns, see `references/api-patte
 - **Docs:** https://docs.frihet.io/desarrolladores
 - **API Reference:** https://docs.frihet.io/desarrolladores/api-rest
 - **MCP Server (npm):** https://www.npmjs.com/package/@frihet/mcp-server
-- **Source Code:** https://github.com/berthelius/frihet-mcp
+- **Source Code:** https://github.com/Frihet-io/frihet-mcp
 - **Remote MCP:** https://mcp.frihet.io
 - **Support:** soporte@frihet.io

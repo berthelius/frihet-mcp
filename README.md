@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@frihet/mcp-server"><img src="https://img.shields.io/npm/v/@frihet/mcp-server?style=flat&color=18181b&labelColor=09090b" alt="npm"></a>
-  <a href="https://github.com/berthelius/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
+  <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
   <a href="https://smithery.ai/server/@frihet/mcp-server"><img src="https://img.shields.io/badge/smithery-listed-18181b?style=flat&labelColor=09090b" alt="smithery"></a>
   <a href="https://frihet.io"><img src="https://img.shields.io/badge/frihet.io-ERP-18181b?style=flat&labelColor=09090b" alt="frihet"></a>
 </p>
@@ -25,13 +25,19 @@ You:     "Create an invoice for TechStart SL, 40 hours of consulting at 75 EUR/h
 Claude:  Done. Invoice INV-2026-089 created. Total: 3,000.00 EUR + 21% IVA = 3,630.00 EUR.
 ```
 
-31 tools. 6 resources. Zero boilerplate.
+31 tools. 5 resources. 5 prompts. Structured output. Zero boilerplate.
 
 ---
 
 ## Install
 
-One line. Pick your tool.
+### Universal (30+ agents — Claude Code, Cursor, Copilot, Codex, Windsurf, Gemini CLI, and more)
+
+```bash
+npx skills add Frihet-io/frihet-mcp
+```
+
+### Per-tool configuration
 
 ### Claude Code / Claude Desktop
 
@@ -245,7 +251,7 @@ Beyond raw MCP tools, Frihet ships a **Claude Code skill** that adds business in
 
 ```bash
 # Clone and symlink
-git clone https://github.com/berthelius/frihet-mcp.git
+git clone https://github.com/Frihet-io/frihet-mcp.git
 ln -s "$(pwd)/frihet-mcp/skill" ~/.claude/skills/frihet
 ```
 
@@ -271,7 +277,7 @@ Full documentation: [docs.frihet.io/desarrolladores/skill-claude-code](https://d
 ## Development
 
 ```bash
-git clone https://github.com/berthelius/frihet-mcp.git
+git clone https://github.com/Frihet-io/frihet-mcp.git
 cd frihet-mcp
 npm install
 npm run build

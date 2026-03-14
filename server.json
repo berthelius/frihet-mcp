@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.berthelius/frihet",
+  "name": "io.github.frihet-io/frihet",
   "description": "Manage invoices, expenses, clients, products and quotes via AI. 31 tools, 5 resources, 5 prompts, structured output. MIT.",
   "repository": {
-    "url": "https://github.com/berthelius/frihet-mcp",
+    "url": "https://github.com/Frihet-io/frihet-mcp",
     "source": "github"
   },
   "version": "1.2.0",
