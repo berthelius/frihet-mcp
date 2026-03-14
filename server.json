@@ -1,17 +1,23 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.frihet-io/frihet",
-  "description": "Manage invoices, expenses, clients, products and quotes via AI. 31 tools, 5 resources, 5 prompts, structured output. MIT.",
+  "name": "io.github.berthelius/frihet",
+  "description": "AI-native business management. Invoices, expenses, clients, products, quotes. 31 tools.",
   "repository": {
     "url": "https://github.com/Frihet-io/frihet-mcp",
     "source": "github"
   },
-  "version": "1.2.1",
+  "version": "1.2.3",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.frihet.io/mcp"
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@frihet/mcp-server",
-      "version": "1.2.1",
+      "version": "1.2.3",
       "transport": {
         "type": "stdio"
       }
