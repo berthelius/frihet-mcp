@@ -65,7 +65,7 @@ function main(): void {
 
   const server = new McpServer({
     name: "frihet-erp",
-    version: "1.2.0",
+    version: "1.2.1",
     description:
       "AI-native MCP server for Frihet ERP — invoices, expenses, clients, products, quotes, and webhooks. " +
       "Provides 31 tools, 5 resources (tax rates, calendar, expense categories, invoice statuses, API schema), " +
