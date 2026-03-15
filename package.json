@@ -1,6 +1,6 @@
 {
   "name": "@frihet/mcp-server",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "AI-native MCP server for business management — invoices, expenses, clients, products, quotes, webhooks. 31 tools. Works with Claude, Cursor, Windsurf, Cline.",
   "type": "module",
   "main": "./dist/index.js",
