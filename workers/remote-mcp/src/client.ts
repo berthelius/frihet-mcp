@@ -314,4 +314,19 @@ export class FrihetClient {
   async deleteWebhook(id: string) {
     return this.request<void>("DELETE", `/webhooks/${encodeURIComponent(id)}`);
   }
+
+  // ---------------------------------------------------------------- Intelligence
+  async getBusinessContext() {
+    return this.request<Record<string, unknown>>("GET", "/context");
+  }
+  async getMonthlySummary(month?: string) {
+    return this.request<Record<string, unknown>>("GET", "/monthly", undefined, {
+      month,
+    });
+  }
+  async getQuarterlyTaxes(quarter?: string) {
+    return this.request<Record<string, unknown>>("GET", "/quarterly", undefined, {
+      quarter,
+    });
+  }
 }

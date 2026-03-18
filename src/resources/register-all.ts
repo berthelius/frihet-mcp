@@ -9,6 +9,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { IFrihetClient } from "../client-interface.js";
 
 /* ------------------------------------------------------------------ */
 /*  Static data                                                        */
@@ -281,7 +282,7 @@ Best practices:
 /*  Registration                                                       */
 /* ------------------------------------------------------------------ */
 
-export function registerAllResources(server: McpServer): void {
+export function registerAllResources(server: McpServer, client?: IFrihetClient): void {
   server.registerResource(
     "api-schema",
     "frihet://api/schema",
@@ -385,4 +386,82 @@ export function registerAllResources(server: McpServer): void {
       ],
     }),
   );
+
+  /* ---------------------------------------------------------------- */
+  /*  Dynamic resources (require API client)                           */
+  /* ---------------------------------------------------------------- */
+
+  if (client) {
+    server.registerResource(
+      "business-profile",
+      "frihet://business-profile",
+      {
+        description:
+          "Live business profile and context — company info, plan limits, recent activity, top clients, " +
+          "current month snapshot. Equivalent to calling get_business_context but as a resource. " +
+          "/ Perfil y contexto del negocio en vivo — info de empresa, limites, actividad reciente, clientes principales.",
+        mimeType: "application/json",
+      },
+      async () => {
+        const data = await client.getBusinessContext();
+        return {
+          contents: [
+            {
+              uri: "frihet://business-profile",
+              mimeType: "application/json",
+              text: JSON.stringify(data, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerResource(
+      "monthly-snapshot",
+      "frihet://monthly-snapshot",
+      {
+        description:
+          "Live financial snapshot for the current month — revenue, expenses, profit, tax liability, " +
+          "invoice counts by status, expense breakdown by category. Updates on every read. " +
+          "/ Resumen financiero del mes actual en vivo — ingresos, gastos, beneficio, impuestos.",
+        mimeType: "application/json",
+      },
+      async () => {
+        const data = await client.getMonthlySummary();
+        return {
+          contents: [
+            {
+              uri: "frihet://monthly-snapshot",
+              mimeType: "application/json",
+              text: JSON.stringify(data, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerResource(
+      "overdue-invoices",
+      "frihet://overdue-invoices",
+      {
+        description:
+          "Live list of all overdue invoices — invoices past their due date that haven't been paid. " +
+          "Includes client names, amounts, due dates, and days overdue. Critical for cash flow management. " +
+          "/ Lista en vivo de facturas vencidas — facturas cuya fecha de vencimiento ha pasado sin cobrar.",
+        mimeType: "application/json",
+      },
+      async () => {
+        const data = await client.listInvoices({ status: "overdue", limit: 100 });
+        return {
+          contents: [
+            {
+              uri: "frihet://overdue-invoices",
+              mimeType: "application/json",
+              text: JSON.stringify(data, null, 2),
+            },
+          ],
+        };
+      },
+    );
+  }
 }

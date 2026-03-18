@@ -212,6 +212,103 @@ export function mutateContent(text: string): AnnotatedTextContent {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Contextual enrichment — _suggestions and _warnings                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Adds contextual suggestions and warnings to tool responses.
+ * Helps AI agents know what to do next without guessing.
+ */
+export function enrichResponse(
+  resource: string,
+  operation: string,
+  data: unknown,
+): { _suggestions?: string[]; _warnings?: string[] } {
+  const suggestions: string[] = [];
+  const warnings: string[] = [];
+
+  // After creating an invoice
+  if (operation === "create" && resource === "invoices") {
+    suggestions.push("send_invoice — Send this invoice to the client by email");
+    suggestions.push("get_invoice — View the full invoice with calculated totals");
+    const rec = data as Record<string, unknown> | undefined;
+    if (rec?.status === "draft") {
+      suggestions.push('update_invoice — Change status to "sent" when ready');
+    }
+  }
+
+  // After listing invoices
+  if (operation === "list" && resource === "invoices") {
+    const items = (data as Record<string, unknown>[] | undefined);
+    if (Array.isArray(items)) {
+      const overdue = items.filter((i) => i.status === "overdue");
+      if (overdue.length > 0) {
+        warnings.push(`${overdue.length} overdue invoice(s) need attention`);
+        suggestions.push("Use the overdue-followup prompt to draft payment reminders");
+      }
+      const drafts = items.filter((i) => i.status === "draft");
+      if (drafts.length > 0) {
+        suggestions.push(`${drafts.length} draft invoice(s) — review and send when ready`);
+      }
+    }
+  }
+
+  // After creating an expense
+  if (operation === "create" && resource === "expenses") {
+    suggestions.push("get_monthly_summary — Check how this affects your monthly P&L");
+    suggestions.push("list_expenses — View all expenses for the period");
+  }
+
+  // After listing expenses
+  if (operation === "list" && resource === "expenses") {
+    const items = (data as Record<string, unknown>[] | undefined);
+    if (Array.isArray(items)) {
+      const uncategorized = items.filter((i) => !i.category);
+      if (uncategorized.length > 0) {
+        warnings.push(`${uncategorized.length} expense(s) without a category — categorize for tax deductions`);
+        suggestions.push("Use the expense-batch prompt to categorize expenses in bulk");
+      }
+    }
+  }
+
+  // After creating a client
+  if (operation === "create" && resource === "clients") {
+    suggestions.push("create_invoice — Create the first invoice for this client");
+    suggestions.push("create_quote — Send a quote to this new client");
+  }
+
+  // After creating a quote
+  if (operation === "create" && resource === "quotes") {
+    suggestions.push("get_quote — View the quote with calculated totals");
+    suggestions.push("create_invoice — Convert this quote to an invoice when accepted");
+  }
+
+  // After updating an invoice to paid
+  if (operation === "update" && resource === "invoices") {
+    const rec = data as Record<string, unknown> | undefined;
+    if (rec?.status === "paid") {
+      suggestions.push("get_monthly_summary — Review updated monthly revenue");
+    }
+  }
+
+  // After duplicating an invoice
+  if (operation === "duplicate" && resource === "invoices") {
+    suggestions.push("update_invoice — Adjust line items or dates on the new invoice");
+    suggestions.push("get_invoice — Review the duplicated invoice before sending");
+  }
+
+  // After deleting anything
+  if (operation === "delete") {
+    warnings.push("This action cannot be undone / Esta accion no se puede deshacer");
+  }
+
+  return {
+    ...(suggestions.length > 0 ? { _suggestions: suggestions } : {}),
+    ...(warnings.length > 0 ? { _warnings: warnings } : {}),
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Output schemas (MCP spec 2025-11-25: outputSchema + structuredContent) */
 /* ------------------------------------------------------------------ */
 

@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, clientItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, clientItemOutput } from "./shared.js";
 
 const addressSchema = z
   .object({
@@ -94,9 +94,10 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
     },
     async (input) => withToolLogging("create_client", async () => {
       const result = await client.createClient(input);
+      const hints = enrichResponse("clients", "create", result);
       return {
         content: [mutateContent(formatRecord("Client created", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );

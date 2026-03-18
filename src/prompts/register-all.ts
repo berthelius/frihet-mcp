@@ -253,6 +253,122 @@ export function registerAllPrompts(server: McpServer): void {
     }),
   );
 
+  // -- new-client-invoice --
+
+  server.registerPrompt(
+    "new-client-invoice",
+    {
+      title: "New Client + First Invoice",
+      description:
+        "Create a new client and their first invoice in one workflow. Handles tax rate lookup based on " +
+        "client location, client record creation, and invoice generation. " +
+        "/ Crear un nuevo cliente y su primera factura en un solo flujo. Determina impuestos, crea cliente y factura.",
+      argsSchema: {
+        clientName: z.string().describe("Client or company name / Nombre del cliente o empresa"),
+        country: z
+          .string()
+          .optional()
+          .describe("Client country ISO code (e.g. ES, DE, US) / Codigo de pais"),
+      },
+    },
+    async ({ clientName, country }) => {
+      const locationContext = country
+        ? `The client is located in ${country}.`
+        : "Ask for the client's country to determine the correct tax rate.";
+
+      return {
+        messages: [
+          {
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text:
+                `Create a new client "${clientName}" and their first invoice. ${locationContext}\n\n` +
+                `Follow these steps:\n\n` +
+                `1. GET BUSINESS CONTEXT\n` +
+                `   - Call get_business_context to understand the business defaults and plan limits\n` +
+                `   - Note the default tax rate and currency\n\n` +
+                `2. DETERMINE TAX RATE\n` +
+                `   - Read frihet://tax/rates for the correct rate based on client location\n` +
+                `   - Peninsula Spain: IVA 21% | Canary Islands: IGIC 7% | EU B2B: 0% reverse charge | Outside EU: 0%\n` +
+                `   - Confirm with the user before proceeding\n\n` +
+                `3. CREATE CLIENT\n` +
+                `   - Use create_client with: name, email, taxId (NIF/CIF/VAT), address\n` +
+                `   - Ask the user for any missing details\n\n` +
+                `4. CREATE FIRST INVOICE\n` +
+                `   - Ask what services/products to include with quantities and prices\n` +
+                `   - Use create_invoice with the correct tax rate and client name\n` +
+                `   - Set status to 'draft' for review\n` +
+                `   - Set dueDate to 30 days from today unless specified otherwise\n\n` +
+                `5. SUMMARY\n` +
+                `   - Show the client record and invoice created\n` +
+                `   - State the tax rate applied and total amount\n` +
+                `   - Suggest: send the invoice when ready, or duplicate_invoice for recurring billing`,
+            },
+          },
+        ],
+      };
+    },
+  );
+
+  // -- expense-report --
+
+  server.registerPrompt(
+    "expense-report",
+    {
+      title: "Expense Report",
+      description:
+        "Generate an expense report grouped by category for a given period. Shows totals, " +
+        "deductible amounts, top vendors, and flags uncategorized expenses. " +
+        "/ Genera un informe de gastos agrupado por categoria para un periodo. Totales, deducibles, proveedores.",
+      argsSchema: {
+        month: z
+          .string()
+          .optional()
+          .describe("Month in YYYY-MM format (defaults to current month) / Mes en formato YYYY-MM"),
+      },
+    },
+    async ({ month }) => {
+      const targetMonth = month || "the current month";
+      return {
+        messages: [
+          {
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text:
+                `Generate an expense report for ${targetMonth}.\n\n` +
+                `Follow these steps:\n\n` +
+                `1. GATHER EXPENSES\n` +
+                `   - Use list_expenses with the date range for the month\n` +
+                `   - If there are more than 50, paginate to get all of them\n\n` +
+                `2. CATEGORIZE & GROUP\n` +
+                `   - Read frihet://config/expense-categories for the category definitions\n` +
+                `   - Group expenses by category\n` +
+                `   - For uncategorized expenses, suggest the best category and flag for review\n\n` +
+                `3. GENERATE REPORT\n` +
+                `   Present a clear report with:\n` +
+                `   - TOTAL expenses for the period\n` +
+                `   - Breakdown by category (amount, count, % of total)\n` +
+                `   - Top 5 vendors by spend\n` +
+                `   - Tax-deductible total vs non-deductible\n` +
+                `   - Deductible IVA/IGIC total (input tax for quarterly filing)\n\n` +
+                `4. INSIGHTS\n` +
+                `   - Compare with get_monthly_summary for the same period\n` +
+                `   - Flag any expenses >€500 that might need amortization instead of full deduction\n` +
+                `   - Note any categories with unusual spending vs typical patterns\n` +
+                `   - Identify expenses missing receipts (no vendor = likely missing documentation)\n\n` +
+                `5. ACTION ITEMS\n` +
+                `   - List uncategorized expenses that need categorization\n` +
+                `   - List expenses that may need receipts\n` +
+                `   - Suggest if any expenses should be reclassified`,
+            },
+          },
+        ],
+      };
+    },
+  );
+
   // -- expense-batch --
 
   server.registerPrompt(

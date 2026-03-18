@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput } from "./shared.js";
 
 const quoteItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -112,9 +112,10 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
     },
     async (input) => withToolLogging("create_quote", async () => {
       const result = await client.createQuote(input);
+      const hints = enrichResponse("quotes", "create", result);
       return {
         content: [mutateContent(formatRecord("Quote created", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );

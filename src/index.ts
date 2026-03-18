@@ -67,20 +67,21 @@ function main(): void {
 
   const server = new McpServer({
     name: "frihet-erp",
-    version: "1.3.1",
+    version: "1.4.0",
     description:
       "AI-native MCP server for Frihet ERP — invoices, expenses, clients, products, quotes, and webhooks. " +
-      "Provides 31 tools, 5 resources (tax rates, calendar, expense categories, invoice statuses, API schema), " +
-      "and 5 workflow prompts for business management with full Spanish tax compliance (IVA, IGIC, IPSI).",
+      "Provides 35 tools (including business context, monthly summaries, quarterly taxes, and invoice duplication), " +
+      "8 resources (5 static + 3 live), and 7 workflow prompts for business management " +
+      "with full Spanish tax compliance (IVA, IGIC, IPSI).",
   });
 
-  // Register all 31 tools
+  // Register all 35 tools (31 CRUD + 4 intelligence)
   registerAllTools(server, client);
 
-  // Register 5 static resources (tax rates, calendar, categories, statuses, API schema)
-  registerAllResources(server);
+  // Register 8 resources (5 static + 3 dynamic via API)
+  registerAllResources(server, client);
 
-  // Register 5 workflow prompts (monthly close, onboard client, tax prep, overdue follow-up, expense batch)
+  // Register 7 workflow prompts
   registerAllPrompts(server);
 
   // Register shutdown hook to log final metrics summary
@@ -89,12 +90,12 @@ function main(): void {
   // Connect via stdio transport
   const transport = new StdioServerTransport();
   server.connect(transport).then(() => {
-    console.error("[frihet-mcp] v1.3.1 | 31 tools | https://github.com/Frihet-io/frihet-mcp");
+    console.error("[frihet-mcp] v1.4.0 | 35 tools | https://github.com/Frihet-io/frihet-mcp");
     log({
       level: "info",
       message: "Frihet MCP server running on stdio",
       operation: "startup",
-      metadata: { version: "1.3.1", transport: "stdio" },
+      metadata: { version: "1.4.0", transport: "stdio" },
     });
   }).catch((error: unknown) => {
     log({

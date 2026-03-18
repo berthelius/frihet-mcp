@@ -51,4 +51,9 @@ export interface IFrihetClient {
   createWebhook(data: Record<string, unknown>): Promise<Record<string, unknown>>;
   updateWebhook(id: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
   deleteWebhook(id: string): Promise<void>;
+
+  // Intelligence endpoints
+  getBusinessContext(): Promise<Record<string, unknown>>;
+  getMonthlySummary(month?: string): Promise<Record<string, unknown>>;
+  getQuarterlyTaxes(quarter?: string): Promise<Record<string, unknown>>;
 }

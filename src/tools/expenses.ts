@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, expenseItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, expenseItemOutput } from "./shared.js";
 
 export function registerExpenseTools(server: McpServer, client: IFrihetClient): void {
   // -- list_expenses --
@@ -36,9 +36,10 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
     },
     async ({ from, to, limit, offset }) => withToolLogging("list_expenses", async () => {
       const result = await client.listExpenses({ limit, offset, from, to });
+      const hints = enrichResponse("expenses", "list", result.data);
       return {
         content: [listContent(formatPaginatedResponse("expenses", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
@@ -101,9 +102,10 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
     },
     async (input) => withToolLogging("create_expense", async () => {
       const result = await client.createExpense(input);
+      const hints = enrichResponse("expenses", "create", result);
       return {
         content: [mutateContent(formatRecord("Expense created", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
@@ -156,9 +158,10 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
     },
     async ({ id }) => withToolLogging("delete_expense", async () => {
       await client.deleteExpense(id);
+      const hints = enrichResponse("expenses", "delete", { id });
       return {
         content: [mutateContent(`Expense ${id} deleted successfully. / Gasto ${id} eliminado correctamente.`)],
-        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+        structuredContent: { success: true, id, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );

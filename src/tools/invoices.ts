@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput } from "./shared.js";
 
 const invoiceItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -59,9 +59,10 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     },
     async ({ status, from, to, limit, offset }) => withToolLogging("list_invoices", async () => {
       const result = await client.listInvoices({ limit, offset, status, from, to });
+      const hints = enrichResponse("invoices", "list", result.data);
       return {
         content: [listContent(formatPaginatedResponse("invoices", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
@@ -136,9 +137,10 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     },
     async (input) => withToolLogging("create_invoice", async () => {
       const result = await client.createInvoice(input);
+      const hints = enrichResponse("invoices", "create", result);
       return {
         content: [mutateContent(formatRecord("Invoice created", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
@@ -175,9 +177,10 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     },
     async ({ id, ...data }) => withToolLogging("update_invoice", async () => {
       const result = await client.updateInvoice(id, data);
+      const hints = enrichResponse("invoices", "update", result);
       return {
         content: [mutateContent(formatRecord("Invoice updated", result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
@@ -199,9 +202,10 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     },
     async ({ id }) => withToolLogging("delete_invoice", async () => {
       await client.deleteInvoice(id);
+      const hints = enrichResponse("invoices", "delete", { id });
       return {
         content: [mutateContent(`Invoice ${id} deleted successfully. / Factura ${id} eliminada correctamente.`)],
-        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+        structuredContent: { success: true, id, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
@@ -243,9 +247,10 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
         ? await client.searchInvoices(query, { limit, offset, status, from, to })
         : await client.listInvoices({ limit, offset, status, from, to });
       const label = query ? `invoices matching "${query}"` : "invoices";
+      const hints = enrichResponse("invoices", "list", result.data);
       return {
         content: [listContent(formatPaginatedResponse(label, result))],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
       };
     }),
   );
