@@ -22,6 +22,8 @@ const ALLOWED_REQUEST_HEADERS = [
   'authorization',
   'user-agent',
   'accept-language',
+  'idempotency-key',
+  'x-request-id',
 ];
 
 /** Response headers allowed to pass through to client */
@@ -33,6 +35,10 @@ const ALLOWED_RESPONSE_HEADERS = [
   'x-ratelimit-limit',
   'x-ratelimit-remaining',
   'x-ratelimit-reset',
+  'x-api-version',
+  'x-request-id',
+  'x-idempotent-replayed',
+  'x-content-type-options',
 ];
 
 /**
@@ -84,8 +90,9 @@ function getCorsHeaders(request) {
 
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization, Idempotency-Key, X-Request-Id',
+    'Access-Control-Expose-Headers': 'X-Request-Id, X-API-Version, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Idempotent-Replayed',
     'Access-Control-Max-Age': '86400',
   };
 }
@@ -105,7 +112,8 @@ export default {
     const url = new URL(request.url);
 
     // Public routes: forward to /publicApi/ (no /api/ prefix) for root-level endpoints
-    if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/openapi.yaml")) {
+    const PUBLIC_PATHS = ['/', '/openapi.json', '/openapi.yaml', '/v1', '/v1/', '/v1/openapi.json', '/v1/openapi.yaml'];
+    if (request.method === "GET" && PUBLIC_PATHS.includes(url.pathname)) {
       const upstream = new URL(url.pathname, UPSTREAM);
       upstream.pathname = "/publicApi" + url.pathname;
       upstream.search = url.search;
