@@ -17,6 +17,7 @@ import { McpAgent } from "agents/mcp";
 import { registerAllTools } from "../../../src/tools/register-all.js";
 import { registerAllResources } from "../../../src/resources/register-all.js";
 import { registerAllPrompts } from "../../../src/prompts/register-all.js";
+import { log } from "../../../src/logger.js";
 import { FrihetClient } from "./client.js";
 import { authHandler } from "./auth-handler.js";
 
@@ -47,6 +48,16 @@ export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
     if (!apiKey) {
       throw new Error("No API key in auth context");
     }
+    log({
+      level: "info",
+      message: "MCP session initialized",
+      operation: "session_init",
+      metadata: {
+        userId: this.props?.userId,
+        email: this.props?.email,
+        locale: this.props?.locale,
+      },
+    });
     const client = new FrihetClient(apiKey);
 
     // The worker and root project both use @modelcontextprotocol/sdk 1.26.0 but
@@ -111,12 +122,20 @@ const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 50
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+    const startTime = Date.now();
 
-    // HEAD requests → 200 (required by Anthropic)
+    // HEAD requests -> 200 (required by Anthropic)
     if (request.method === "HEAD") {
       return new Response(null, {
         status: 200,
         headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // OpenAI domain verification
+    if (url.pathname === "/.well-known/openai-apps-challenge") {
+      return new Response("n1HADESagZNO49wuoz8r9exBEq9GODR5bcno1DFveT4", {
+        headers: { "Content-Type": "text/plain" },
       });
     }
 
@@ -133,6 +152,60 @@ export default {
       });
     }
 
-    return oauthProvider.fetch(request, env, ctx);
+    // Health check with real API connectivity test
+    if (url.pathname === "/health") {
+      const checks: Record<string, { status: string; latencyMs?: number }> = {};
+
+      try {
+        const apiStart = Date.now();
+        const apiRes = await fetch("https://api.frihet.io/v1/health", {
+          method: "HEAD",
+          signal: AbortSignal.timeout(5000),
+        });
+        checks.api = {
+          status: apiRes.ok ? "ok" : "degraded",
+          latencyMs: Math.round(Date.now() - apiStart),
+        };
+      } catch {
+        checks.api = { status: "unreachable" };
+      }
+
+      const overallStatus = Object.values(checks).every((c) => c.status === "ok")
+        ? "ok"
+        : "degraded";
+
+      return new Response(
+        JSON.stringify({
+          status: overallStatus,
+          checks,
+          version: "1.2.4",
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: overallStatus === "ok" ? 200 : 503,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const response = await oauthProvider.fetch(request, env, ctx);
+
+    // Log all non-trivial requests (skip favicons, static assets)
+    const durationMs = Math.round(Date.now() - startTime);
+    const userAgent = request.headers.get("user-agent") ?? "unknown";
+    log({
+      level: response.status >= 500 ? "error" : response.status >= 400 ? "warn" : "info",
+      message: `${request.method} ${url.pathname} ${response.status} ${durationMs}ms`,
+      operation: "http_request",
+      durationMs,
+      metadata: {
+        method: request.method,
+        path: url.pathname,
+        statusCode: response.status,
+        userAgent,
+      },
+    });
+
+    return response;
   },
 } satisfies ExportedHandler<Env>;

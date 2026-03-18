@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput } from "./shared.js";
 
 const quoteItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -32,17 +32,13 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       },
       outputSchema: paginatedOutput(quoteItemOutput),
     },
-    async ({ limit, offset }) => {
-      try {
-        const result = await client.listQuotes({ limit, offset });
-        return {
-          content: [listContent(formatPaginatedResponse("quotes", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ limit, offset }) => withToolLogging("list_quotes", async () => {
+      const result = await client.listQuotes({ limit, offset });
+      return {
+        content: [listContent(formatPaginatedResponse("quotes", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- get_quote --
@@ -60,17 +56,13 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       },
       outputSchema: quoteItemOutput,
     },
-    async ({ id }) => {
-      try {
-        const result = await client.getQuote(id);
-        return {
-          content: [getContent(formatRecord("Quote", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("get_quote", async () => {
+      const result = await client.getQuote(id);
+      return {
+        content: [getContent(formatRecord("Quote", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- create_quote --
@@ -103,17 +95,13 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       },
       outputSchema: quoteItemOutput,
     },
-    async (input) => {
-      try {
-        const result = await client.createQuote(input);
-        return {
-          content: [mutateContent(formatRecord("Quote created", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async (input) => withToolLogging("create_quote", async () => {
+      const result = await client.createQuote(input);
+      return {
+        content: [mutateContent(formatRecord("Quote created", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- update_quote --
@@ -139,17 +127,13 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       },
       outputSchema: quoteItemOutput,
     },
-    async ({ id, ...data }) => {
-      try {
-        const result = await client.updateQuote(id, data);
-        return {
-          content: [mutateContent(formatRecord("Quote updated", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id, ...data }) => withToolLogging("update_quote", async () => {
+      const result = await client.updateQuote(id, data);
+      return {
+        content: [mutateContent(formatRecord("Quote updated", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- delete_quote --
@@ -167,16 +151,12 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       },
       outputSchema: deleteResultOutput,
     },
-    async ({ id }) => {
-      try {
-        await client.deleteQuote(id);
-        return {
-          content: [mutateContent(`Quote ${id} deleted successfully. / Presupuesto ${id} eliminado correctamente.`)],
-          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("delete_quote", async () => {
+      await client.deleteQuote(id);
+      return {
+        content: [mutateContent(`Quote ${id} deleted successfully. / Presupuesto ${id} eliminado correctamente.`)],
+        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+      };
+    }),
   );
 }

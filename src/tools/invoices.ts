@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput } from "./shared.js";
 
 const invoiceItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -43,17 +43,13 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: paginatedOutput(invoiceItemOutput),
     },
-    async ({ limit, offset }) => {
-      try {
-        const result = await client.listInvoices({ limit, offset });
-        return {
-          content: [listContent(formatPaginatedResponse("invoices", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ limit, offset }) => withToolLogging("list_invoices", async () => {
+      const result = await client.listInvoices({ limit, offset });
+      return {
+        content: [listContent(formatPaginatedResponse("invoices", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- get_invoice --
@@ -71,17 +67,13 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: invoiceItemOutput,
     },
-    async ({ id }) => {
-      try {
-        const result = await client.getInvoice(id);
-        return {
-          content: [getContent(formatRecord("Invoice", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("get_invoice", async () => {
+      const result = await client.getInvoice(id);
+      return {
+        content: [getContent(formatRecord("Invoice", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- create_invoice --
@@ -123,17 +115,13 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: invoiceItemOutput,
     },
-    async (input) => {
-      try {
-        const result = await client.createInvoice(input);
-        return {
-          content: [mutateContent(formatRecord("Invoice created", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async (input) => withToolLogging("create_invoice", async () => {
+      const result = await client.createInvoice(input);
+      return {
+        content: [mutateContent(formatRecord("Invoice created", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- update_invoice --
@@ -164,17 +152,13 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: invoiceItemOutput,
     },
-    async ({ id, ...data }) => {
-      try {
-        const result = await client.updateInvoice(id, data);
-        return {
-          content: [mutateContent(formatRecord("Invoice updated", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id, ...data }) => withToolLogging("update_invoice", async () => {
+      const result = await client.updateInvoice(id, data);
+      return {
+        content: [mutateContent(formatRecord("Invoice updated", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- delete_invoice --
@@ -192,17 +176,13 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: deleteResultOutput,
     },
-    async ({ id }) => {
-      try {
-        await client.deleteInvoice(id);
-        return {
-          content: [mutateContent(`Invoice ${id} deleted successfully. / Factura ${id} eliminada correctamente.`)],
-          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("delete_invoice", async () => {
+      await client.deleteInvoice(id);
+      return {
+        content: [mutateContent(`Invoice ${id} deleted successfully. / Factura ${id} eliminada correctamente.`)],
+        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- search_invoices --
@@ -222,18 +202,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: paginatedOutput(invoiceItemOutput),
     },
-    async ({ clientName, limit, offset }) => {
-      try {
-        const result = await client.searchInvoices(clientName, { limit, offset });
-        return {
-          content: [
-            listContent(formatPaginatedResponse(`invoices matching "${clientName}"`, result)),
-          ],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ clientName, limit, offset }) => withToolLogging("search_invoices", async () => {
+      const result = await client.searchInvoices(clientName, { limit, offset });
+      return {
+        content: [
+          listContent(formatPaginatedResponse(`invoices matching "${clientName}"`, result)),
+        ],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 }

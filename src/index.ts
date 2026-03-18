@@ -17,6 +17,8 @@ import { FrihetClient } from "./client.js";
 import { registerAllTools } from "./tools/register-all.js";
 import { registerAllResources } from "./resources/register-all.js";
 import { registerAllPrompts } from "./prompts/register-all.js";
+import { log } from "./logger.js";
+import { registerShutdownHook } from "./metrics.js";
 
 function main(): void {
   const apiKey = process.env.FRIHET_API_KEY;
@@ -81,12 +83,25 @@ function main(): void {
   // Register 5 workflow prompts (monthly close, onboard client, tax prep, overdue follow-up, expense batch)
   registerAllPrompts(server);
 
+  // Register shutdown hook to log final metrics summary
+  registerShutdownHook();
+
   // Connect via stdio transport
   const transport = new StdioServerTransport();
   server.connect(transport).then(() => {
-    console.error("Frihet MCP server running on stdio");
+    log({
+      level: "info",
+      message: "Frihet MCP server running on stdio",
+      operation: "startup",
+      metadata: { version: "1.2.4", transport: "stdio" },
+    });
   }).catch((error: unknown) => {
-    console.error("Failed to start Frihet MCP server:", error);
+    log({
+      level: "error",
+      message: "Failed to start Frihet MCP server",
+      operation: "startup",
+      error: { message: error instanceof Error ? error.message : String(error) },
+    });
     process.exit(1);
   });
 }

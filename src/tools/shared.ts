@@ -10,6 +10,8 @@
 import type { ToolAnnotations, Annotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod/v4";
 import type { PaginatedResponse } from "../types.js";
+import { log, logToolCall } from "../logger.js";
+import { recordToolCall } from "../metrics.js";
 
 /* ------------------------------------------------------------------ */
 /*  Safety annotations for MCP tool registrations                      */
@@ -89,14 +91,24 @@ function isFrihetApiError(error: unknown): error is FrihetApiErrorLike {
 
 /**
  * Maps an error to a user-friendly MCP tool response with error annotations.
+ * Emits structured log entries for all errors.
  */
-export function handleToolError(error: unknown): {
+export function handleToolError(error: unknown, toolName?: string): {
   content: AnnotatedTextContent[];
   isError: true;
 } {
   if (isFrihetApiError(error)) {
-    // Log raw error details to stderr for debugging — never expose to LLM
-    console.error(`[Frihet API Error] ${error.statusCode} ${error.errorCode}: ${error.message}`);
+    log({
+      level: "error",
+      message: `API error: ${error.statusCode} ${error.errorCode}: ${error.message}`,
+      tool: toolName,
+      operation: "tool_error",
+      error: {
+        message: error.message,
+        code: error.errorCode,
+        statusCode: error.statusCode,
+      },
+    });
 
     const messages: Record<number, string> = {
       400: "Bad request. Check your input parameters. / Solicitud incorrecta. Revisa los parametros.",
@@ -124,8 +136,17 @@ export function handleToolError(error: unknown): {
     };
   }
 
-  // Log raw error to stderr for debugging — return generic message to LLM
-  console.error("[Frihet MCP Error]", error instanceof Error ? error.stack ?? error.message : error);
+  const errMsg = error instanceof Error ? error.stack ?? error.message : String(error);
+  log({
+    level: "error",
+    message: `Unexpected error: ${errMsg}`,
+    tool: toolName,
+    operation: "tool_error",
+    error: {
+      message: error instanceof Error ? error.message : String(error),
+      code: error instanceof Error ? error.name : "unknown",
+    },
+  });
 
   return {
     content: [{ type: "text", text: "Error: An unexpected error occurred. Contact support if this persists.", annotations: ERROR_CONTENT_ANNOTATIONS }],
@@ -296,3 +317,46 @@ export const webhookItemOutput = z.object({
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 }).passthrough();
+
+/* ------------------------------------------------------------------ */
+/*  Tool execution wrapper with logging + metrics                      */
+/* ------------------------------------------------------------------ */
+
+/** Return type of a tool handler — index signature required by MCP SDK */
+interface ToolResult {
+  [x: string]: unknown;
+  content: AnnotatedTextContent[];
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
+}
+
+/**
+ * Wraps a tool handler to automatically log execution time, success/failure,
+ * and record metrics. Catches errors and routes them through handleToolError.
+ *
+ * Usage in tool registration files:
+ * ```ts
+ * async ({ id }) => withToolLogging("get_invoice", async () => {
+ *   const result = await client.getInvoice(id);
+ *   return { content: [getContent(formatRecord("Invoice", result))], structuredContent: result };
+ * })
+ * ```
+ */
+export async function withToolLogging(
+  toolName: string,
+  fn: () => Promise<ToolResult>,
+): Promise<ToolResult> {
+  const startTime = Date.now();
+  try {
+    const result = await fn();
+    const durationMs = Math.round(Date.now() - startTime);
+    logToolCall(toolName, startTime, true);
+    recordToolCall(toolName, durationMs, true);
+    return result;
+  } catch (error) {
+    const durationMs = Math.round(Date.now() - startTime);
+    logToolCall(toolName, startTime, false, error instanceof Error ? error as Error & { statusCode?: number; errorCode?: string } : new Error(String(error)));
+    recordToolCall(toolName, durationMs, false);
+    return handleToolError(error, toolName);
+  }
+}

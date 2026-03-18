@@ -20,7 +20,9 @@
     "../../src/resources/**/*",
     "../../src/prompts/**/*",
     "../../src/client-interface.ts",
-    "../../src/types.ts"
+    "../../src/types.ts",
+    "../../src/logger.ts",
+    "../../src/metrics.ts"
   ],
   "exclude": ["node_modules"]
 }

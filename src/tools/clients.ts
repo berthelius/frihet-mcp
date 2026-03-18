@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, clientItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, clientItemOutput } from "./shared.js";
 
 const addressSchema = z
   .object({
@@ -36,17 +36,13 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       },
       outputSchema: paginatedOutput(clientItemOutput),
     },
-    async ({ limit, offset }) => {
-      try {
-        const result = await client.listClients({ limit, offset });
-        return {
-          content: [listContent(formatPaginatedResponse("clients", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ limit, offset }) => withToolLogging("list_clients", async () => {
+      const result = await client.listClients({ limit, offset });
+      return {
+        content: [listContent(formatPaginatedResponse("clients", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- get_client --
@@ -64,17 +60,13 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       },
       outputSchema: clientItemOutput,
     },
-    async ({ id }) => {
-      try {
-        const result = await client.getClient(id);
-        return {
-          content: [getContent(formatRecord("Client", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("get_client", async () => {
+      const result = await client.getClient(id);
+      return {
+        content: [getContent(formatRecord("Client", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- create_client --
@@ -98,17 +90,13 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       },
       outputSchema: clientItemOutput,
     },
-    async (input) => {
-      try {
-        const result = await client.createClient(input);
-        return {
-          content: [mutateContent(formatRecord("Client created", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async (input) => withToolLogging("create_client", async () => {
+      const result = await client.createClient(input);
+      return {
+        content: [mutateContent(formatRecord("Client created", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- update_client --
@@ -131,17 +119,13 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       },
       outputSchema: clientItemOutput,
     },
-    async ({ id, ...data }) => {
-      try {
-        const result = await client.updateClient(id, data);
-        return {
-          content: [mutateContent(formatRecord("Client updated", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id, ...data }) => withToolLogging("update_client", async () => {
+      const result = await client.updateClient(id, data);
+      return {
+        content: [mutateContent(formatRecord("Client updated", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- delete_client --
@@ -161,16 +145,12 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       },
       outputSchema: deleteResultOutput,
     },
-    async ({ id }) => {
-      try {
-        await client.deleteClient(id);
-        return {
-          content: [mutateContent(`Client ${id} deleted successfully. / Cliente ${id} eliminado correctamente.`)],
-          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("delete_client", async () => {
+      await client.deleteClient(id);
+      return {
+        content: [mutateContent(`Client ${id} deleted successfully. / Cliente ${id} eliminado correctamente.`)],
+        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+      };
+    }),
   );
 }

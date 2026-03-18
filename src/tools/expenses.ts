@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, expenseItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, expenseItemOutput } from "./shared.js";
 
 export function registerExpenseTools(server: McpServer, client: IFrihetClient): void {
   // -- list_expenses --
@@ -24,17 +24,13 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: paginatedOutput(expenseItemOutput),
     },
-    async ({ limit, offset }) => {
-      try {
-        const result = await client.listExpenses({ limit, offset });
-        return {
-          content: [listContent(formatPaginatedResponse("expenses", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ limit, offset }) => withToolLogging("list_expenses", async () => {
+      const result = await client.listExpenses({ limit, offset });
+      return {
+        content: [listContent(formatPaginatedResponse("expenses", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- get_expense --
@@ -52,17 +48,13 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: expenseItemOutput,
     },
-    async ({ id }) => {
-      try {
-        const result = await client.getExpense(id);
-        return {
-          content: [getContent(formatRecord("Expense", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("get_expense", async () => {
+      const result = await client.getExpense(id);
+      return {
+        content: [getContent(formatRecord("Expense", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- create_expense --
@@ -96,17 +88,13 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: expenseItemOutput,
     },
-    async (input) => {
-      try {
-        const result = await client.createExpense(input);
-        return {
-          content: [mutateContent(formatRecord("Expense created", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async (input) => withToolLogging("create_expense", async () => {
+      const result = await client.createExpense(input);
+      return {
+        content: [mutateContent(formatRecord("Expense created", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- update_expense --
@@ -130,17 +118,13 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: expenseItemOutput,
     },
-    async ({ id, ...data }) => {
-      try {
-        const result = await client.updateExpense(id, data);
-        return {
-          content: [mutateContent(formatRecord("Expense updated", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id, ...data }) => withToolLogging("update_expense", async () => {
+      const result = await client.updateExpense(id, data);
+      return {
+        content: [mutateContent(formatRecord("Expense updated", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- delete_expense --
@@ -158,16 +142,12 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: deleteResultOutput,
     },
-    async ({ id }) => {
-      try {
-        await client.deleteExpense(id);
-        return {
-          content: [mutateContent(`Expense ${id} deleted successfully. / Gasto ${id} eliminado correctamente.`)],
-          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("delete_expense", async () => {
+      await client.deleteExpense(id);
+      return {
+        content: [mutateContent(`Expense ${id} deleted successfully. / Gasto ${id} eliminado correctamente.`)],
+        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+      };
+    }),
   );
 }

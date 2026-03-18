@@ -3,6 +3,8 @@
  * Inlined for Cloudflare Workers runtime (no Node.js dependencies).
  */
 
+import { logApiCall, logRetry } from "../../../src/logger.js";
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
@@ -69,6 +71,7 @@ export class FrihetClient {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+    const startTime = Date.now();
     let response: Response;
     try {
       response = await fetch(url.toString(), {
@@ -78,20 +81,27 @@ export class FrihetClient {
         signal: controller.signal,
       });
     } catch (error) {
+      const durationMs = Math.round(Date.now() - startTime);
       if (error instanceof Error && error.name === "AbortError") {
+        logApiCall(method, path, 408, durationMs);
         throw new FrihetApiError(
           408,
           "request_timeout",
           `Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds`,
         );
       }
+      logApiCall(method, path, 0, durationMs);
       throw error;
     } finally {
       clearTimeout(timeoutId);
     }
 
+    const durationMs = Math.round(Date.now() - startTime);
+
     // Rate limit handling
     if (response.status === 429) {
+      logApiCall(method, path, 429, durationMs);
+
       if (retryCount >= MAX_RETRIES) {
         throw new FrihetApiError(
           429,
@@ -103,12 +113,14 @@ export class FrihetClient {
       const delayMs = retryAfter
         ? parseInt(retryAfter, 10) * 1000
         : DEFAULT_RETRY_DELAY_MS * Math.pow(2, retryCount);
+      logRetry(method, path, retryCount, delayMs);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
       return this.request<T>(method, path, body, query, retryCount + 1);
     }
 
     // Error responses
     if (!response.ok) {
+      logApiCall(method, path, response.status, durationMs);
       let errorBody: ApiError;
       try {
         errorBody = (await response.json()) as ApiError;
@@ -124,6 +136,8 @@ export class FrihetClient {
         errorBody.message ?? errorBody.error,
       );
     }
+
+    logApiCall(method, path, response.status, durationMs);
 
     if (response.status === 204) {
       return undefined as T;

@@ -11,6 +11,7 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
 import { getLoginPage } from "./login-page.js";
+import { log } from "../../../src/logger.js";
 
 type AuthEnv = Env & { OAUTH_PROVIDER: OAuthHelpers };
 
@@ -55,14 +56,32 @@ app.get("/authorize", async (c) => {
   try {
     oauthReq = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
   } catch (err) {
+    log({
+      level: "warn",
+      message: "Invalid OAuth authorize request",
+      operation: "oauth_authorize",
+      error: { message: err instanceof Error ? err.message : String(err) },
+    });
     return c.text(
       "Invalid OAuth request. Ensure client_id is registered via /register first.",
       400,
     );
   }
   if (!oauthReq) {
+    log({
+      level: "warn",
+      message: "OAuth authorize request parsed to null",
+      operation: "oauth_authorize",
+    });
     return c.text("Invalid OAuth request", 400);
   }
+
+  log({
+    level: "info",
+    message: `OAuth authorize started for client ${oauthReq.clientId}`,
+    operation: "oauth_authorize",
+    metadata: { clientId: oauthReq.clientId },
+  });
 
   // Store OAuth request in short-lived KV entry (10 min TTL)
   const stateKey = crypto.randomUUID();
@@ -96,6 +115,11 @@ app.post("/callback", async (c) => {
   // Retrieve the original OAuth request from KV
   const oauthReqJson = await c.env.OAUTH_KV.get(`auth_state:${body.stateKey}`);
   if (!oauthReqJson) {
+    log({
+      level: "warn",
+      message: "OAuth callback with invalid or expired state",
+      operation: "oauth_callback",
+    });
     return c.json({ error: "Invalid or expired state" }, 400);
   }
   const oauthReq = JSON.parse(oauthReqJson) as AuthRequest;
@@ -114,7 +138,13 @@ app.post("/callback", async (c) => {
   let decoded: { uid: string; email?: string; name?: string };
   try {
     decoded = await auth.verifyIdToken(body.idToken);
-  } catch {
+  } catch (err) {
+    log({
+      level: "warn",
+      message: "OAuth callback: invalid Firebase token",
+      operation: "oauth_callback",
+      error: { message: err instanceof Error ? err.message : String(err) },
+    });
     return c.json({ error: "Invalid Firebase token" }, 401);
   }
 
@@ -132,6 +162,12 @@ app.post("/callback", async (c) => {
   );
 
   if (!apiKeyResponse.ok) {
+    log({
+      level: "error",
+      message: `OAuth callback: failed to provision API key for ${decoded.uid}`,
+      operation: "oauth_callback",
+      error: { message: `API key provisioning returned ${apiKeyResponse.status}`, statusCode: apiKeyResponse.status },
+    });
     return c.json({ error: "Failed to provision API key" }, 500);
   }
 
@@ -152,6 +188,13 @@ app.post("/callback", async (c) => {
       email: decoded.email,
       name: decoded.name,
     },
+  });
+
+  log({
+    level: "info",
+    message: `OAuth callback: success for ${decoded.email ?? decoded.uid}`,
+    operation: "oauth_callback",
+    metadata: { userId: decoded.uid, email: decoded.email },
   });
 
   return c.json({ redirectTo });

@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { handleToolError, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, productItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, productItemOutput } from "./shared.js";
 
 export function registerProductTools(server: McpServer, client: IFrihetClient): void {
   // -- list_products --
@@ -26,17 +26,13 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: paginatedOutput(productItemOutput),
     },
-    async ({ limit, offset }) => {
-      try {
-        const result = await client.listProducts({ limit, offset });
-        return {
-          content: [listContent(formatPaginatedResponse("products", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ limit, offset }) => withToolLogging("list_products", async () => {
+      const result = await client.listProducts({ limit, offset });
+      return {
+        content: [listContent(formatPaginatedResponse("products", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- get_product --
@@ -54,17 +50,13 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: productItemOutput,
     },
-    async ({ id }) => {
-      try {
-        const result = await client.getProduct(id);
-        return {
-          content: [getContent(formatRecord("Product", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("get_product", async () => {
+      const result = await client.getProduct(id);
+      return {
+        content: [getContent(formatRecord("Product", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- create_product --
@@ -97,17 +89,13 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: productItemOutput,
     },
-    async (input) => {
-      try {
-        const result = await client.createProduct(input);
-        return {
-          content: [mutateContent(formatRecord("Product created", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async (input) => withToolLogging("create_product", async () => {
+      const result = await client.createProduct(input);
+      return {
+        content: [mutateContent(formatRecord("Product created", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- update_product --
@@ -131,17 +119,13 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: productItemOutput,
     },
-    async ({ id, ...data }) => {
-      try {
-        const result = await client.updateProduct(id, data);
-        return {
-          content: [mutateContent(formatRecord("Product updated", result))],
-          structuredContent: result as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id, ...data }) => withToolLogging("update_product", async () => {
+      const result = await client.updateProduct(id, data);
+      return {
+        content: [mutateContent(formatRecord("Product updated", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
   );
 
   // -- delete_product --
@@ -159,16 +143,12 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: deleteResultOutput,
     },
-    async ({ id }) => {
-      try {
-        await client.deleteProduct(id);
-        return {
-          content: [mutateContent(`Product ${id} deleted successfully. / Producto ${id} eliminado correctamente.`)],
-          structuredContent: { success: true, id } as unknown as Record<string, unknown>,
-        };
-      } catch (error) {
-        return handleToolError(error);
-      }
-    },
+    async ({ id }) => withToolLogging("delete_product", async () => {
+      await client.deleteProduct(id);
+      return {
+        content: [mutateContent(`Product ${id} deleted successfully. / Producto ${id} eliminado correctamente.`)],
+        structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+      };
+    }),
   );
 }
