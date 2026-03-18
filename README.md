@@ -146,6 +146,35 @@ Talk to your ERP. These are real prompts, not marketing copy.
 
 ---
 
+## What to expect
+
+This MCP is a **structured data interface** -- you describe what you want in natural language, and the AI creates, queries, or modifies business records in Frihet. All 31 tools are CRUD operations over the REST API.
+
+**Works great:**
+
+```
+"Create an invoice for TechStart SL, 40h consulting at 75 EUR/h"   --> creates the invoice
+"Show unpaid invoices over 1,000 EUR"                               --> queries and filters
+"Log a 120 EUR expense for the Madrid train, category: travel"      --> records the expense
+"Update client Acme's email to billing@acme.es"                     --> modifies the record
+```
+
+**Does not do:**
+
+- OCR or PDF scanning -- you cannot upload an invoice image and have it read
+- File upload or attachment handling
+- Image processing of any kind
+
+If you need to digitize paper invoices or receipts, extract the data first (e.g., Claude Vision API, a dedicated OCR service, or manual entry), then use the MCP to create the record:
+
+```
+1. Scan/photograph the invoice
+2. Use Claude Vision: "Read this invoice image and extract the vendor, items, amounts, and dates"
+3. Then: "Create an expense in Frihet for [extracted data]"
+```
+
+---
+
 ## Tools (31)
 
 ### Invoices (6)
@@ -350,6 +379,14 @@ cd frihet-mcp
 npm install
 npm run build   # must pass before submitting
 ```
+
+---
+
+## Current limitations
+
+- **No OCR or file upload** -- the MCP works with structured data, not images or PDFs. Planned for a future release.
+- **Single company** -- one API key maps to one Frihet workspace. Multi-company support is not yet available.
+- **Frihet account required** -- you need an active account at [app.frihet.io](https://app.frihet.io) and an API key (starts with `fri_`).
 
 ---
 
