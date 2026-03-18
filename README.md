@@ -13,7 +13,7 @@
   <a href="https://smithery.ai/server/frihet/frihet-mcp"><img src="https://smithery.ai/badge/frihet/frihet-mcp" alt="Smithery installs"></a>
   <a href="https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet"><img src="https://img.shields.io/badge/MCP-Registry-18181b?style=flat&labelColor=09090b" alt="MCP Registry"></a>
   <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
-  <img src="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b" alt="31 tools">
+  <img src="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b" alt="35 tools">
   <img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18">
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-18181b?style=flat&labelColor=09090b" alt="TypeScript"></a>
 </p>
@@ -29,7 +29,7 @@ You:     "Create an invoice for TechStart SL, 40 hours of consulting at 75 EUR/h
 Claude:  Done. Invoice INV-2026-089 created. Total: 3,000.00 EUR + 21% IVA = 3,630.00 EUR.
 ```
 
-31 tools. 5 resources. 5 prompts. Structured output on every tool. Zero boilerplate.
+35 tools. 8 resources. 7 prompts. Structured output on every tool. Zero boilerplate.
 
 ---
 
@@ -148,7 +148,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 
 ## What to expect
 
-This MCP is a **structured data interface** -- you describe what you want in natural language, and the AI creates, queries, or modifies business records in Frihet. All 31 tools are CRUD operations over the REST API.
+This MCP is a **structured data interface** -- you describe what you want in natural language, and the AI creates, queries, or modifies business records in Frihet. All 35 tools are CRUD operations over the REST API.
 
 **Works great:**
 
@@ -175,7 +175,7 @@ If you need to digitize paper invoices or receipts, extract the data first (e.g.
 
 ---
 
-## Tools (31)
+## Tools (35)
 
 ### Invoices (6)
 
@@ -238,7 +238,7 @@ If you need to digitize paper invoices or receipts, extract the data first (e.g.
 | `update_webhook` | Modify events or URL |
 | `delete_webhook` | Remove a webhook |
 
-All 31 tools return **structured output** via `outputSchema` -- typed JSON, not raw text. List tools return paginated results (`{ data, total, limit, offset }`).
+All 35 tools return **structured output** via `outputSchema` -- typed JSON, not raw text. List tools return paginated results (`{ data, total, limit, offset }`).
 
 ---
 
