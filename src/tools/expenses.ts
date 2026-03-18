@@ -15,17 +15,27 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
     {
       title: "List Expenses",
       description:
-        "List all expenses with optional pagination. " +
-        "/ Lista todos los gastos con paginacion opcional.",
+        "List all expenses with optional pagination and date range filters. " +
+        "Returns expenses sorted by date (newest first). " +
+        "Example: from='2026-01-01', to='2026-03-31', limit=50 " +
+        "/ Lista todos los gastos con paginacion y filtros de fecha opcionales.",
       annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
+        from: z
+          .string()
+          .optional()
+          .describe("Start date filter (YYYY-MM-DD) / Fecha inicio"),
+        to: z
+          .string()
+          .optional()
+          .describe("End date filter (YYYY-MM-DD) / Fecha fin"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
       outputSchema: paginatedOutput(expenseItemOutput),
     },
-    async ({ limit, offset }) => withToolLogging("list_expenses", async () => {
-      const result = await client.listExpenses({ limit, offset });
+    async ({ from, to, limit, offset }) => withToolLogging("list_expenses", async () => {
+      const result = await client.listExpenses({ limit, offset, from, to });
       return {
         content: [listContent(formatPaginatedResponse("expenses", result))],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -66,6 +76,7 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
       description:
         "Record a new expense. Requires a description and amount. " +
         "Useful for tracking business costs, deductible expenses, and vendor payments. " +
+        "Example: description='Office supplies', amount=49.99, category='office', vendor='Amazon', taxDeductible=true " +
         "/ Registra un nuevo gasto. Requiere descripcion e importe. " +
         "Util para seguimiento de costes, gastos deducibles y pagos a proveedores.",
       annotations: CREATE_ANNOTATIONS,
@@ -104,7 +115,8 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
     {
       title: "Update Expense",
       description:
-        "Update an existing expense. Only the provided fields will be changed. " +
+        "Update an existing expense using PATCH semantics. Only the provided fields will be changed. " +
+        "Example: id='abc123', amount=75.00, category='travel' " +
         "/ Actualiza un gasto existente. Solo se modifican los campos proporcionados.",
       annotations: UPDATE_ANNOTATIONS,
       inputSchema: {

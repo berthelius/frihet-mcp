@@ -11,6 +11,7 @@ const addressSchema = z
   .object({
     street: z.string().optional().describe("Street address / Direccion"),
     city: z.string().optional().describe("City / Ciudad"),
+    state: z.string().optional().describe("State or province / Provincia o comunidad autonoma"),
     postalCode: z.string().optional().describe("Postal code / Codigo postal"),
     country: z.string().optional().describe("Country (ISO code) / Pais"),
   })
@@ -78,6 +79,7 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
       description:
         "Create a new client/customer. Requires at minimum a name. " +
         "Clients are used when creating invoices and quotes. " +
+        "Example: name='Acme Corp', email='billing@acme.com', taxId='B12345678', address={street:'Main St 1', city:'Madrid', country:'ES'} " +
         "/ Crea un nuevo cliente. Requiere como minimo un nombre. " +
         "Los clientes se usan al crear facturas y presupuestos.",
       annotations: CREATE_ANNOTATIONS,
@@ -106,7 +108,8 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
     {
       title: "Update Client",
       description:
-        "Update an existing client. Only the provided fields will be changed. " +
+        "Update an existing client using PATCH semantics. Only the provided fields will be changed. " +
+        "Example: id='abc123', email='new@acme.com', phone='+34600123456' " +
         "/ Actualiza un cliente existente. Solo se modifican los campos proporcionados.",
       annotations: UPDATE_ANNOTATIONS,
       inputSchema: {

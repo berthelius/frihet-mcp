@@ -183,14 +183,18 @@ export class FrihetClient {
   // ---------------------------------------------------------------- Public
   // ----------------------------------------------------------------
 
-  // Invoices
+  // ---------------------------------------------------------------- Invoices
+  // ----------------------------------------------------------------
 
   async listInvoices(
-    params?: { limit?: number; offset?: number },
+    params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/invoices", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      status: params?.status,
+      from: params?.from,
+      to: params?.to,
     });
   }
 
@@ -206,7 +210,7 @@ export class FrihetClient {
     id: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/invoices/${encodeURIComponent(id)}`, data);
+    return this.request("PATCH", `/invoices/${encodeURIComponent(id)}`, data);
   }
 
   async deleteInvoice(id: string): Promise<void> {
@@ -214,24 +218,30 @@ export class FrihetClient {
   }
 
   async searchInvoices(
-    clientName: string,
-    params?: { limit?: number; offset?: number },
+    query: string,
+    params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/invoices", undefined, {
-      clientName,
+      q: query,
       limit: params?.limit,
       offset: params?.offset,
+      status: params?.status,
+      from: params?.from,
+      to: params?.to,
     });
   }
 
-  // Expenses
+  // ---------------------------------------------------------------- Expenses
+  // ----------------------------------------------------------------
 
   async listExpenses(
-    params?: { limit?: number; offset?: number },
+    params?: { limit?: number; offset?: number; from?: string; to?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/expenses", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      from: params?.from,
+      to: params?.to,
     });
   }
 
@@ -247,14 +257,15 @@ export class FrihetClient {
     id: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/expenses/${encodeURIComponent(id)}`, data);
+    return this.request("PATCH", `/expenses/${encodeURIComponent(id)}`, data);
   }
 
   async deleteExpense(id: string): Promise<void> {
     return this.request("DELETE", `/expenses/${encodeURIComponent(id)}`);
   }
 
-  // Clients
+  // ---------------------------------------------------------------- Clients
+  // ----------------------------------------------------------------
 
   async listClients(
     params?: { limit?: number; offset?: number },
@@ -277,14 +288,15 @@ export class FrihetClient {
     id: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/clients/${encodeURIComponent(id)}`, data);
+    return this.request("PATCH", `/clients/${encodeURIComponent(id)}`, data);
   }
 
   async deleteClient(id: string): Promise<void> {
     return this.request("DELETE", `/clients/${encodeURIComponent(id)}`);
   }
 
-  // Products
+  // ---------------------------------------------------------------- Products
+  // ----------------------------------------------------------------
 
   async listProducts(
     params?: { limit?: number; offset?: number },
@@ -307,21 +319,25 @@ export class FrihetClient {
     id: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/products/${encodeURIComponent(id)}`, data);
+    return this.request("PATCH", `/products/${encodeURIComponent(id)}`, data);
   }
 
   async deleteProduct(id: string): Promise<void> {
     return this.request("DELETE", `/products/${encodeURIComponent(id)}`);
   }
 
-  // Quotes
+  // ---------------------------------------------------------------- Quotes
+  // ----------------------------------------------------------------
 
   async listQuotes(
-    params?: { limit?: number; offset?: number },
+    params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/quotes", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      status: params?.status,
+      from: params?.from,
+      to: params?.to,
     });
   }
 
@@ -337,14 +353,15 @@ export class FrihetClient {
     id: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/quotes/${encodeURIComponent(id)}`, data);
+    return this.request("PATCH", `/quotes/${encodeURIComponent(id)}`, data);
   }
 
   async deleteQuote(id: string): Promise<void> {
     return this.request("DELETE", `/quotes/${encodeURIComponent(id)}`);
   }
 
-  // Webhooks
+  // ---------------------------------------------------------------- Webhooks
+  // ----------------------------------------------------------------
 
   async listWebhooks(
     params?: { limit?: number; offset?: number },
@@ -367,7 +384,7 @@ export class FrihetClient {
     id: string,
     data: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.request("PUT", `/webhooks/${encodeURIComponent(id)}`, data);
+    return this.request("PATCH", `/webhooks/${encodeURIComponent(id)}`, data);
   }
 
   async deleteWebhook(id: string): Promise<void> {

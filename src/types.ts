@@ -28,6 +28,7 @@ export interface PaginationParams {
 export interface Address {
   street?: string;
   city?: string;
+  state?: string;
   postalCode?: string;
   country?: string;
 }
@@ -44,8 +45,9 @@ export interface Invoice {
   id: string;
   clientName: string;
   items: InvoiceItem[];
-  status?: string;
+  issueDate?: string;
   dueDate?: string;
+  status?: string;
   notes?: string;
   taxRate?: number;
   total?: number;
@@ -54,7 +56,7 @@ export interface Invoice {
 }
 
 export type CreateInvoiceInput = Pick<Invoice, "clientName" | "items"> &
-  Partial<Pick<Invoice, "status" | "dueDate" | "notes" | "taxRate">>;
+  Partial<Pick<Invoice, "issueDate" | "dueDate" | "status" | "notes" | "taxRate">>;
 
 export type UpdateInvoiceInput = Partial<CreateInvoiceInput>;
 
@@ -102,15 +104,13 @@ export interface Product {
   name: string;
   unitPrice: number;
   description?: string;
-  unit?: string;
   taxRate?: number;
-  sku?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export type CreateProductInput = Pick<Product, "name" | "unitPrice"> &
-  Partial<Pick<Product, "description" | "unit" | "taxRate" | "sku">>;
+  Partial<Pick<Product, "description" | "taxRate">>;
 
 export type UpdateProductInput = Partial<CreateProductInput>;
 

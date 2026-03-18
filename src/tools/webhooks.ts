@@ -65,9 +65,12 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
       title: "Create Webhook",
       description:
         "Register a new webhook endpoint. You must specify the URL to receive notifications " +
-        "and which events to subscribe to (e.g. 'invoice.created', 'invoice.paid', 'expense.created'). " +
-        "/ Registra un nuevo endpoint de webhook. Debes especificar la URL y los eventos " +
-        "a los que suscribirte (ej. 'invoice.created', 'invoice.paid', 'expense.created').",
+        "and which events to subscribe to. " +
+        "Available events: invoice.created, invoice.updated, invoice.paid, invoice.deleted, " +
+        "expense.created, expense.updated, expense.deleted, client.created, client.updated, " +
+        "quote.created, quote.updated, quote.accepted. " +
+        "Example: url='https://example.com/webhook', events=['invoice.created','invoice.paid'], secret='my-secret' " +
+        "/ Registra un nuevo endpoint de webhook. Especifica la URL y los eventos a suscribir.",
       annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         url: z.string().url().describe("Webhook endpoint URL / URL del endpoint del webhook"),
@@ -107,7 +110,8 @@ export function registerWebhookTools(server: McpServer, client: IFrihetClient): 
     {
       title: "Update Webhook",
       description:
-        "Update an existing webhook configuration. Only the provided fields will be changed. " +
+        "Update an existing webhook configuration using PATCH semantics. Only provided fields change. " +
+        "Example: id='abc123', active=false to disable a webhook. " +
         "/ Actualiza la configuracion de un webhook. Solo se modifican los campos proporcionados.",
       annotations: UPDATE_ANNOTATIONS,
       inputSchema: {

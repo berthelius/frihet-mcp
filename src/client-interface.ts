@@ -10,15 +10,15 @@ import type { PaginatedResponse } from "./types.js";
 
 export interface IFrihetClient {
   // Invoices
-  listInvoices(params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  listInvoices(params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string }): Promise<PaginatedResponse<Record<string, unknown>>>;
   getInvoice(id: string): Promise<Record<string, unknown>>;
   createInvoice(data: Record<string, unknown>): Promise<Record<string, unknown>>;
   updateInvoice(id: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
   deleteInvoice(id: string): Promise<void>;
-  searchInvoices(clientName: string, params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  searchInvoices(query: string, params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string }): Promise<PaginatedResponse<Record<string, unknown>>>;
 
   // Expenses
-  listExpenses(params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  listExpenses(params?: { limit?: number; offset?: number; from?: string; to?: string }): Promise<PaginatedResponse<Record<string, unknown>>>;
   getExpense(id: string): Promise<Record<string, unknown>>;
   createExpense(data: Record<string, unknown>): Promise<Record<string, unknown>>;
   updateExpense(id: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
@@ -39,7 +39,7 @@ export interface IFrihetClient {
   deleteProduct(id: string): Promise<void>;
 
   // Quotes
-  listQuotes(params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  listQuotes(params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string }): Promise<PaginatedResponse<Record<string, unknown>>>;
   getQuote(id: string): Promise<Record<string, unknown>>;
   createQuote(data: Record<string, unknown>): Promise<Record<string, unknown>>;
   updateQuote(id: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;

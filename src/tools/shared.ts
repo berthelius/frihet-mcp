@@ -245,8 +245,9 @@ export const invoiceItemOutput = z.object({
   id: z.string(),
   clientName: z.string(),
   items: z.array(lineItemSchema),
-  status: z.string().optional(),
+  issueDate: z.string().optional(),
   dueDate: z.string().optional(),
+  status: z.string().optional(),
   notes: z.string().optional(),
   taxRate: z.number().optional(),
   total: z.number().optional(),
@@ -269,6 +270,7 @@ export const expenseItemOutput = z.object({
 const addressOutputSchema = z.object({
   street: z.string().optional(),
   city: z.string().optional(),
+  state: z.string().optional(),
   postalCode: z.string().optional(),
   country: z.string().optional(),
 }).optional();
@@ -289,9 +291,7 @@ export const productItemOutput = z.object({
   name: z.string(),
   unitPrice: z.number(),
   description: z.string().optional(),
-  unit: z.string().optional(),
   taxRate: z.number().optional(),
-  sku: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 }).passthrough();

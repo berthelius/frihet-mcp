@@ -66,26 +66,22 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
     {
       title: "Create Product",
       description:
-        "Create a new product or service. Requires a name and unit price. " +
+        "Create a new product or service in the catalog. Requires a name and unit price. " +
         "Products can be referenced when creating invoices and quotes for faster data entry. " +
-        "/ Crea un nuevo producto o servicio. Requiere nombre y precio unitario. " +
-        "Los productos se pueden usar al crear facturas y presupuestos.",
+        "Example: name='Web Design', unitPrice=1500, taxRate=21, description='Full website redesign' " +
+        "/ Crea un nuevo producto o servicio en el catalogo. Requiere nombre y precio unitario. " +
+        "Los productos se pueden usar al crear facturas y presupuestos para entrada rapida de datos.",
       annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         name: z.string().describe("Product/service name / Nombre del producto o servicio"),
         unitPrice: z.number().describe("Unit price in EUR / Precio unitario en EUR"),
         description: z.string().optional().describe("Product description / Descripcion"),
-        unit: z
-          .string()
-          .optional()
-          .describe("Unit of measurement (e.g. 'hour', 'unit', 'kg') / Unidad de medida"),
         taxRate: z
           .number()
           .min(0)
           .max(100)
           .optional()
           .describe("Default tax rate % (e.g. 21 for 21% IVA) / IVA por defecto"),
-        sku: z.string().optional().describe("SKU / Reference code / Codigo de referencia"),
       },
       outputSchema: productItemOutput,
     },
@@ -105,7 +101,8 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
     {
       title: "Update Product",
       description:
-        "Update an existing product. Only the provided fields will be changed. " +
+        "Update an existing product using PATCH semantics. Only the provided fields will be changed. " +
+        "Example: id='abc123', unitPrice=2000, taxRate=21 " +
         "/ Actualiza un producto existente. Solo se modifican los campos proporcionados.",
       annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
@@ -113,9 +110,7 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
         name: z.string().optional().describe("Name / Nombre"),
         unitPrice: z.number().optional().describe("Unit price / Precio unitario"),
         description: z.string().optional().describe("Description / Descripcion"),
-        unit: z.string().optional().describe("Unit / Unidad"),
         taxRate: z.number().min(0).max(100).optional().describe("Tax rate % / IVA %"),
-        sku: z.string().optional().describe("SKU / Referencia"),
       },
       outputSchema: productItemOutput,
     },

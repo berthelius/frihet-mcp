@@ -21,12 +21,26 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     {
       title: "List Invoices",
       description:
-        "List all invoices with optional pagination. " +
-        "Returns a paginated list of invoices sorted by creation date. " +
-        "/ Lista todas las facturas con paginacion opcional. " +
-        "Devuelve una lista paginada de facturas ordenadas por fecha de creacion.",
+        "List all invoices with optional pagination and filters. " +
+        "Returns a paginated list sorted by issue date (newest first). " +
+        "Supports filtering by status (draft/sent/paid/overdue/cancelled) and date range. " +
+        "Example: status='paid', from='2026-01-01', to='2026-03-31', limit=20 " +
+        "/ Lista facturas con paginacion y filtros opcionales. " +
+        "Soporta filtrado por estado y rango de fechas.",
       annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
+        status: z
+          .enum(["draft", "sent", "paid", "overdue", "cancelled"])
+          .optional()
+          .describe("Filter by invoice status / Filtrar por estado"),
+        from: z
+          .string()
+          .optional()
+          .describe("Start date filter in ISO 8601 (YYYY-MM-DD) / Fecha inicio"),
+        to: z
+          .string()
+          .optional()
+          .describe("End date filter in ISO 8601 (YYYY-MM-DD) / Fecha fin"),
         limit: z
           .number()
           .int()
@@ -43,8 +57,8 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       },
       outputSchema: paginatedOutput(invoiceItemOutput),
     },
-    async ({ limit, offset }) => withToolLogging("list_invoices", async () => {
-      const result = await client.listInvoices({ limit, offset });
+    async ({ status, from, to, limit, offset }) => withToolLogging("list_invoices", async () => {
+      const result = await client.listInvoices({ limit, offset, status, from, to });
       return {
         content: [listContent(formatPaginatedResponse("invoices", result))],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -84,34 +98,39 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       title: "Create Invoice",
       description:
         "Create a new invoice. Requires client name and at least one line item. " +
-        "The invoice number is auto-generated. " +
+        "The invoice number is auto-generated. Defaults to draft status and today's date. " +
+        "Example: clientName='Acme Corp', items=[{description:'Consulting', quantity:10, unitPrice:150}], taxRate=21 " +
         "/ Crea una nueva factura. Requiere nombre del cliente y al menos un concepto. " +
-        "El numero de factura se genera automaticamente.",
+        "El numero se genera automaticamente. Por defecto estado borrador y fecha de hoy.",
       annotations: CREATE_ANNOTATIONS,
       inputSchema: {
         clientName: z.string().describe("Client/customer name / Nombre del cliente"),
         items: z
           .array(invoiceItemSchema)
           .min(1)
-          .describe("Line items / Conceptos de la factura"),
-        status: z
-          .enum(["draft", "sent", "paid", "overdue", "cancelled"])
+          .describe("Line items (each with description, quantity, unitPrice) / Conceptos de la factura"),
+        issueDate: z
+          .string()
           .optional()
-          .describe("Invoice status (default: draft) / Estado de la factura"),
+          .describe("Issue date in ISO 8601 format (YYYY-MM-DD), defaults to today / Fecha de emision"),
         dueDate: z
           .string()
           .optional()
           .describe("Due date in ISO 8601 format (YYYY-MM-DD) / Fecha de vencimiento"),
+        status: z
+          .enum(["draft", "sent", "paid", "overdue", "cancelled"])
+          .optional()
+          .describe("Invoice status (default: draft) / Estado de la factura"),
         notes: z
           .string()
           .optional()
-          .describe("Additional notes / Notas adicionales"),
+          .describe("Additional notes shown on the invoice / Notas adicionales"),
         taxRate: z
           .number()
           .min(0)
           .max(100)
           .optional()
-          .describe("Tax rate percentage (e.g. 21 for 21% IVA) / Porcentaje de impuesto"),
+          .describe("Tax rate percentage (e.g. 21 for 21% IVA, 7 for IGIC) / Porcentaje de impuesto"),
       },
       outputSchema: invoiceItemOutput,
     },
@@ -131,7 +150,8 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     {
       title: "Update Invoice",
       description:
-        "Update an existing invoice. Only the provided fields will be changed. " +
+        "Update an existing invoice using PATCH semantics. Only the provided fields will be changed. " +
+        "Example: id='abc123', status='paid' to mark an invoice as paid. " +
         "/ Actualiza una factura existente. Solo se modifican los campos proporcionados.",
       annotations: UPDATE_ANNOTATIONS,
       inputSchema: {
@@ -142,11 +162,12 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .min(1)
           .optional()
           .describe("Line items / Conceptos"),
+        issueDate: z.string().optional().describe("Issue date (YYYY-MM-DD) / Fecha de emision"),
+        dueDate: z.string().optional().describe("Due date (YYYY-MM-DD) / Fecha de vencimiento"),
         status: z
           .enum(["draft", "sent", "paid", "overdue", "cancelled"])
           .optional()
           .describe("Invoice status / Estado"),
-        dueDate: z.string().optional().describe("Due date (YYYY-MM-DD) / Fecha de vencimiento"),
         notes: z.string().optional().describe("Notes / Notas"),
         taxRate: z.number().min(0).max(100).optional().describe("Tax rate % / IVA %"),
       },
@@ -192,22 +213,38 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     {
       title: "Search Invoices",
       description:
-        "Search invoices by client name. Useful for finding all invoices for a specific client. " +
-        "/ Busca facturas por nombre de cliente. Util para encontrar todas las facturas de un cliente concreto.",
+        "Search and filter invoices. Supports filtering by status and date range. " +
+        "The query parameter searches across client names and invoice content. " +
+        "Example: query='Acme', status='paid', from='2026-01-01', to='2026-03-31' " +
+        "/ Busca y filtra facturas. Soporta filtrado por estado y rango de fechas. " +
+        "El parametro query busca en nombres de clientes y contenido de facturas.",
       annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
-        clientName: z.string().describe("Client name to search for / Nombre del cliente a buscar"),
-        limit: z.number().int().min(1).max(100).optional().describe("Max results / Resultados maximos"),
+        query: z.string().optional().describe("Search text (client name, etc.) / Texto de busqueda"),
+        status: z
+          .enum(["draft", "sent", "paid", "overdue", "cancelled"])
+          .optional()
+          .describe("Filter by status / Filtrar por estado"),
+        from: z
+          .string()
+          .optional()
+          .describe("Start date filter (YYYY-MM-DD) / Fecha inicio"),
+        to: z
+          .string()
+          .optional()
+          .describe("End date filter (YYYY-MM-DD) / Fecha fin"),
+        limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
       },
       outputSchema: paginatedOutput(invoiceItemOutput),
     },
-    async ({ clientName, limit, offset }) => withToolLogging("search_invoices", async () => {
-      const result = await client.searchInvoices(clientName, { limit, offset });
+    async ({ query, status, from, to, limit, offset }) => withToolLogging("search_invoices", async () => {
+      const result = query
+        ? await client.searchInvoices(query, { limit, offset, status, from, to })
+        : await client.listInvoices({ limit, offset, status, from, to });
+      const label = query ? `invoices matching "${query}"` : "invoices";
       return {
-        content: [
-          listContent(formatPaginatedResponse(`invoices matching "${clientName}"`, result)),
-        ],
+        content: [listContent(formatPaginatedResponse(label, result))],
         structuredContent: result as unknown as Record<string, unknown>,
       };
     }),
