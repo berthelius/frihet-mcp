@@ -57,12 +57,26 @@ function buildUpstreamHeaders(request) {
   return headers;
 }
 
+/** Security headers applied to every response (API serves JSON, not HTML) */
+const SECURITY_HEADERS = {
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+
 /**
  * Build filtered response headers from whitelist only.
  * Adds CORS headers when the origin is recognized.
+ * Always adds security headers.
  */
 function buildResponseHeaders(upstreamResponse, request) {
   const headers = new Headers();
+  // Security headers first (defense in depth)
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    headers.set(key, value);
+  }
   for (const name of ALLOWED_RESPONSE_HEADERS) {
     const value = upstreamResponse.headers.get(name);
     if (value !== null) {
@@ -104,9 +118,9 @@ export default {
     if (request.method === "OPTIONS") {
       const corsHeaders = getCorsHeaders(request);
       if (!corsHeaders) {
-        return new Response(null, { status: 403 });
+        return new Response(null, { status: 403, headers: SECURITY_HEADERS });
       }
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return new Response(null, { status: 204, headers: { ...SECURITY_HEADERS, ...corsHeaders } });
     }
 
     const url = new URL(request.url);
@@ -159,7 +173,7 @@ export default {
     } catch (error) {
       clearTimeout(timeoutId);
 
-      const errorHeaders = { 'Content-Type': 'application/json' };
+      const errorHeaders = { 'Content-Type': 'application/json', ...SECURITY_HEADERS };
       const corsHeaders = getCorsHeaders(request);
       if (corsHeaders) {
         Object.assign(errorHeaders, corsHeaders);

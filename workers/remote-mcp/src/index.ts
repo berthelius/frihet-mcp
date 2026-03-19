@@ -118,6 +118,28 @@ const oauthProvider = new OAuthProvider({
 // Frihet favicon — black circle (#171717)
 const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><circle cx="250" cy="250" r="230" fill="#171717"/></svg>`;
 
+/** Security headers applied to every response */
+const SECURITY_HEADERS: Record<string, string> = {
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
+
+/** Clone a response adding security headers (immutable Response workaround) */
+function withSecurityHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!headers.has(key)) headers.set(key, value);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 // Wrap OAuthProvider to handle HEAD + favicon before OAuth routing
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -126,10 +148,10 @@ export default {
 
     // HEAD requests -> 200 (required by Anthropic)
     if (request.method === "HEAD") {
-      return new Response(null, {
+      return withSecurityHeaders(new Response(null, {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      });
+      }));
     }
 
     // OpenAI domain verification
@@ -206,6 +228,6 @@ export default {
       },
     });
 
-    return response;
+    return withSecurityHeaders(response);
   },
 } satisfies ExportedHandler<Env>;

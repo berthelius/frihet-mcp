@@ -111,6 +111,40 @@ export function getLoginPage(opts: {
     .btn:active { background: #e5e5e5; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1rem 0;
+      font-size: 0.75rem;
+      color: #a3a3a3;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e5e5;
+    }
+    .input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      color: #171717;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input:focus { border-color: #171717; }
+    .btn-primary {
+      background: #171717;
+      color: white;
+      border-color: #171717;
+    }
+    .btn-primary:hover { background: #2a2a2a; border-color: #2a2a2a; }
     .error {
       background: #fef2f2;
       border: 1px solid #fecaca;
@@ -190,6 +224,14 @@ export function getLoginPage(opts: {
         <svg viewBox="0 0 24 24"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
         Continue with Microsoft
       </button>
+
+      <div class="divider">or</div>
+
+      <input type="email" id="email" class="input" placeholder="Email address" autocomplete="email" />
+      <input type="password" id="password" class="input" placeholder="Password" autocomplete="current-password" />
+      <button class="btn btn-primary" onclick="signInWithEmail()">
+        Sign in with email
+      </button>
     </div>
 
     <div id="loading" class="loading">
@@ -237,6 +279,39 @@ export function getLoginPage(opts: {
     function hideLoading() {
       document.getElementById("buttons").style.display = "block";
       document.getElementById("loading").style.display = "none";
+    }
+
+    async function signInWithEmail() {
+      document.getElementById("error").style.display = "none";
+      var email = document.getElementById("email").value.trim();
+      var password = document.getElementById("password").value;
+      if (!email || !password) {
+        showError("Please enter email and password.");
+        return;
+      }
+      try {
+        var result = await firebase.auth().signInWithEmailAndPassword(email, password);
+        var idToken = await result.user.getIdToken();
+        showLoading();
+        var response = await fetch("/callback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stateKey: STATE_KEY,
+            idToken: idToken,
+            locale: navigator.language.startsWith("es") ? "es" : "en",
+          }),
+        });
+        if (!response.ok) {
+          var err = await response.json();
+          throw new Error(err.error || "Authentication failed");
+        }
+        var data = await response.json();
+        window.location.href = data.redirectTo;
+      } catch (err) {
+        hideLoading();
+        showError(err.message || "Authentication failed. Please try again.");
+      }
     }
 
     async function signIn(provider) {
