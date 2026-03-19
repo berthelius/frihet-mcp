@@ -13,7 +13,7 @@
   <a href="https://smithery.ai/server/frihet/frihet-mcp"><img src="https://smithery.ai/badge/frihet/frihet-mcp" alt="Smithery installs"></a>
   <a href="https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet"><img src="https://img.shields.io/badge/MCP-Registry-18181b?style=flat&labelColor=09090b" alt="MCP Registry"></a>
   <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
-  <img src="https://img.shields.io/badge/tools-31-18181b?style=flat&labelColor=09090b" alt="35 tools">
+  <img src="https://img.shields.io/badge/tools-35-18181b?style=flat&labelColor=09090b" alt="35 tools">
   <img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18">
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-18181b?style=flat&labelColor=09090b" alt="TypeScript"></a>
 </p>
@@ -238,13 +238,24 @@ If you need to digitize paper invoices or receipts, extract the data first (e.g.
 | `update_webhook` | Modify events or URL |
 | `delete_webhook` | Remove a webhook |
 
+### Intelligence (4)
+
+| Tool | What it does |
+|------|-------------|
+| `get_business_context` | Full snapshot: profile, plan, recent activity, top clients, current month |
+| `get_monthly_summary` | Monthly P&L: revenue, expenses, profit, tax liability, top clients by revenue |
+| `get_quarterly_taxes` | Quarterly tax prep: Modelo 303/130 fields, collected vs deductible, liability |
+| `duplicate_invoice` | Clone an invoice for recurring billing (copies items/client/tax, starts as draft) |
+
 All 35 tools return **structured output** via `outputSchema` -- typed JSON, not raw text. List tools return paginated results (`{ data, total, limit, offset }`).
 
 ---
 
-## Resources (5)
+## Resources (8)
 
-Static context the AI can read without making API calls.
+Context the AI can read to make smarter decisions.
+
+**Static** (reference data, no API calls):
 
 | Resource | URI | What it provides |
 |----------|-----|-----------------|
@@ -254,9 +265,17 @@ Static context the AI can read without making API calls.
 | Expense Categories | `frihet://config/expense-categories` | 8 categories with deductibility rules, IVA treatment, amortization |
 | Invoice Statuses | `frihet://config/invoice-statuses` | Status flow (draft > sent > paid/overdue > cancelled), transition rules, webhook events |
 
+**Dynamic** (live data from your account):
+
+| Resource | URI | What it provides |
+|----------|-----|-----------------|
+| Business Profile | `frihet://business-profile` | Your business info, plan, defaults, recent activity, top clients |
+| Monthly Snapshot | `frihet://monthly-snapshot` | Current month P&L, revenue, expenses, tax liability |
+| Overdue Invoices | `frihet://overdue-invoices` | All invoices past due date (up to 100) |
+
 ---
 
-## Prompts (5)
+## Prompts (7)
 
 Pre-built workflows the AI can execute as guided multi-step operations.
 
@@ -266,19 +285,32 @@ Pre-built workflows the AI can execute as guided multi-step operations.
 | `onboard-client` | Set up a new client with correct tax rates by location, optionally create a welcome quote | `clientName`, `country?`, `region?` |
 | `quarterly-tax-prep` | Prepare quarterly tax filing: calculate IVA/IGIC, identify deductibles, preview Modelo 303/130/420 | `quarter?`, `fiscalZone?` |
 | `overdue-followup` | Find overdue invoices, draft follow-up messages, suggest payment reminders | -- |
+| `new-client-invoice` | Create a client + first invoice in one workflow with tax rate lookup | `clientName`, `country?` |
+| `expense-report` | Generate expense report grouped by category with deductible totals | `month?` (YYYY-MM) |
 | `expense-batch` | Process expenses in bulk: categorize, apply tax rates, flag missing receipts | `fiscalZone?` |
 
 ---
 
 ## How it works
 
-```
-Your AI assistant          frihet-mcp           Frihet API
-      |                        |                    |
-      |-- "create invoice" --> |                    |
-      |                        |-- POST /invoices ->|
-      |                        |<-- 201 Created ----|
-      |<-- structured JSON --- |                    |
+```mermaid
+graph LR
+    AI["Your AI assistant"]
+    MCP["frihet-mcp"]
+    API["api.frihet.io"]
+    DB["Frihet ERP"]
+
+    AI -- "create_invoice()" --> MCP
+    MCP -- "POST /v1/invoices" --> API
+    API --> DB
+    DB -- "201 + invoice data" --> API
+    API -- "structured JSON" --> MCP
+    MCP -- "typed response + suggestions" --> AI
+
+    style AI fill:#09090b,stroke:#4ade80,color:#fafafa
+    style MCP fill:#09090b,stroke:#fafafa,color:#fafafa
+    style API fill:#09090b,stroke:#3f3f46,color:#a1a1aa
+    style DB fill:#09090b,stroke:#3f3f46,color:#a1a1aa
 ```
 
 The server translates tool calls into REST API requests. It handles authentication, rate limiting (automatic retry with backoff on 429), pagination, and error mapping.
@@ -390,19 +422,27 @@ npm run build   # must pass before submitting
 
 ---
 
+## Ecosystem
+
+| Package | What it is |
+|---------|-----------|
+| [`@frihet/mcp-server`](https://www.npmjs.com/package/@frihet/mcp-server) | This MCP server (35 tools, 8 resources, 7 prompts) |
+| [`@frihet/sdk`](https://github.com/Frihet-io/frihet-sdk) | TypeScript SDK (`frihet.invoices.create()`) |
+| [`frihet`](https://www.npmjs.com/package/frihet) | CLI (`frihet invoices list --status overdue`) |
+| [REST API](https://docs.frihet.io/desarrolladores/api-rest) | OpenAPI 3.1 at `api.frihet.io/v1` |
+| [Webhooks](https://docs.frihet.io/desarrolladores/webhooks) | Real-time events with HMAC-SHA256 |
+
 ## Links
 
 - [Frihet](https://frihet.io) -- The product
 - [Documentation](https://docs.frihet.io) -- Full docs
 - [API reference](https://docs.frihet.io/desarrolladores/api-rest) -- REST API
 - [MCP server docs](https://docs.frihet.io/desarrolladores/mcp-server) -- Setup guides, troubleshooting
-- [Webhook docs](https://docs.frihet.io/desarrolladores/webhooks) -- Events, signatures, retries
 - [npm](https://www.npmjs.com/package/@frihet/mcp-server) -- Package registry
 - [MCP Registry](https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet) -- Official MCP Registry
 - [Smithery](https://smithery.ai/server/frihet/frihet-mcp) -- Smithery marketplace
 - [Remote endpoint](https://mcp.frihet.io) -- Hosted MCP server (Cloudflare Workers)
 - [OpenAPI spec](https://api.frihet.io/openapi.yaml) -- Machine-readable API definition
-- [MCP specification](https://modelcontextprotocol.io) -- The protocol
 
 ---
 
