@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="./assets/banner.svg" alt="frihet-mcp" width="100%"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/banner.svg">
+    <source media="(prefers-color-scheme: light)" srcset="./assets/banner-light.svg">
+    <img alt="frihet-mcp" src="./assets/banner.svg" width="100%"/>
+  </picture>
 </p>
 
 <p align="center">

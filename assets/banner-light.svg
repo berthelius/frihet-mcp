@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fafafa"/>
+      <stop offset="1" stop-color="#f4f4f5"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e4e4e7" stroke-width="0.5"/>
+    </pattern>
+    <radialGradient id="glow" cx="600" cy="150" r="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4d4d8" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#fafafa" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  <rect width="1200" height="300" fill="url(#grid)" opacity="0.6"/>
+  <rect width="1200" height="300" fill="url(#glow)"/>
+
+  <!-- Accent line -->
+  <rect x="0" y="0" width="1200" height="2" fill="#171717"/>
+
+  <!-- Terminal prompt decoration -->
+  <g transform="translate(80, 60)">
+    <rect width="16" height="16" rx="8" fill="#f87171" opacity="0.9"/>
+    <rect x="24" width="16" height="16" rx="8" fill="#fbbf24" opacity="0.9"/>
+    <rect x="48" width="16" height="16" rx="8" fill="#4ade80" opacity="0.9"/>
+  </g>
+
+  <!-- Main title -->
+  <text x="80" y="135" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="48" font-weight="700" fill="#171717" letter-spacing="-0.04em">
+    frihet-mcp
+  </text>
+
+  <!-- Subtitle -->
+  <text x="80" y="172" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="18" fill="#71717a" letter-spacing="-0.02em">
+    Your ERP, one prompt away.
+  </text>
+
+  <!-- Right side: tool count badge -->
+  <g transform="translate(820, 90)">
+    <rect width="300" height="120" rx="12" fill="#ffffff" stroke="#e4e4e7" stroke-width="1"/>
+    <text x="24" y="36" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" fill="#a1a1aa">$ npx @frihet/mcp-server</text>
+    <text x="24" y="64" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" fill="#16a34a">&#x2713; 35 tools registered</text>
+    <text x="24" y="88" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" fill="#16a34a">&#x2713; stdio transport ready</text>
+    <text x="24" y="108" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" fill="#a1a1aa">invoices | expenses | clients | products | quotes</text>
+  </g>
+
+  <!-- Cursor blink -->
+  <rect x="80" y="192" width="12" height="22" fill="#171717" opacity="0.7">
+    <animate attributeName="opacity" values="0.7;0;0.7" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Bottom accent -->
+  <rect x="0" y="298" width="1200" height="2" fill="#e4e4e7"/>
+</svg>
