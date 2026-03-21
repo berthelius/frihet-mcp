@@ -369,6 +369,237 @@ export function registerAllPrompts(server: McpServer): void {
     },
   );
 
+  // -- year-end-close --
+
+  server.registerPrompt(
+    "year-end-close",
+    {
+      title: "Year-End Close",
+      description:
+        "Annual closing review: summarize revenue, expenses, profit/loss for the entire year, " +
+        "check all quarters, flag pending invoices and uncategorized expenses, and generate a year-end checklist. " +
+        "/ Cierre anual: resumen de ingresos, gastos, resultado del ejercicio, revisión trimestral " +
+        "y checklist de cierre.",
+      argsSchema: {
+        year: z
+          .string()
+          .describe("Year to close, e.g. '2025' / Año a cerrar"),
+      },
+    },
+    async ({ year }) => {
+      return {
+        messages: [
+          {
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text:
+                `Perform the year-end close for ${year}. Follow these steps in order:\n\n` +
+                `1. BUSINESS CONTEXT\n` +
+                `   - Call get_business_context to understand the business setup, fiscal zone, and plan\n` +
+                `   - Note the default tax type (IVA/IGIC/IPSI) and currency\n\n` +
+                `2. QUARTERLY REVIEW\n` +
+                `   - Call get_quarterly_taxes for Q1 ${year} (months: ${year}-01, ${year}-02, ${year}-03)\n` +
+                `   - Call get_quarterly_taxes for Q2 ${year} (months: ${year}-04, ${year}-05, ${year}-06)\n` +
+                `   - Call get_quarterly_taxes for Q3 ${year} (months: ${year}-07, ${year}-08, ${year}-09)\n` +
+                `   - Call get_quarterly_taxes for Q4 ${year} (months: ${year}-10, ${year}-11, ${year}-12)\n` +
+                `   - For each quarter, note: revenue, expenses, tax collected, tax deductible, net result\n\n` +
+                `3. PENDING INVOICES\n` +
+                `   - Use list_invoices to find all invoices from ${year} with status "draft" or "sent"\n` +
+                `   - Draft invoices should be either finalized or cancelled before closing\n` +
+                `   - Sent invoices should be followed up or marked as bad debt\n` +
+                `   - List each with: invoice number, client, amount, status, date\n\n` +
+                `4. UNCATEGORIZED EXPENSES\n` +
+                `   - Use list_expenses for the full year ${year}\n` +
+                `   - Identify any expenses without a category or with category "other"\n` +
+                `   - Read frihet://config/expense-categories for proper categorization\n` +
+                `   - Suggest correct categories for each uncategorized expense\n\n` +
+                `5. ANNUAL SUMMARY\n` +
+                `   Present the full-year numbers:\n` +
+                `   - Total revenue (paid invoices): sum across all 4 quarters\n` +
+                `   - Total expenses: sum across all 4 quarters, broken down by category\n` +
+                `   - Net profit/loss: revenue minus expenses\n` +
+                `   - Total tax collected (output tax) vs total tax deductible (input tax)\n` +
+                `   - Net tax position for the year (paid vs owed)\n` +
+                `   - Invoice breakdown: total count by status (paid, sent, overdue, draft, cancelled)\n\n` +
+                `6. YEAR-END CHECKLIST\n` +
+                `   Generate actionable items:\n` +
+                `   - [ ] Pending draft invoices to finalize or cancel (list them)\n` +
+                `   - [ ] Sent/overdue invoices to collect or write off (list them)\n` +
+                `   - [ ] Expenses to categorize (list them)\n` +
+                `   - [ ] Tax forms to file:\n` +
+                `         - Read frihet://tax/calendar for annual filing deadlines\n` +
+                `         - Modelo 390 (annual IVA summary) if applicable\n` +
+                `         - Modelo 180/190 (retentions summary) if applicable\n` +
+                `         - Modelo 100 (IRPF annual return)\n` +
+                `   - [ ] Verify all quarterly filings (Modelo 303/420 + 130) were submitted\n` +
+                `   - [ ] Reconcile bank statements with recorded transactions\n` +
+                `   - [ ] Archive all receipts and supporting documents\n` +
+                `   - [ ] Note any carry-forward amounts (negative tax balance, losses)`,
+            },
+          },
+        ],
+      };
+    },
+  );
+
+  // -- cash-flow-forecast --
+
+  server.registerPrompt(
+    "cash-flow-forecast",
+    {
+      title: "Cash Flow Forecast",
+      description:
+        "Project cash flow for the coming months based on recurring income, recurring expenses, " +
+        "overdue receivables, and upcoming tax deadlines. Flags concentration and seasonality risks. " +
+        "/ Proyección de flujo de caja: ingresos recurrentes, gastos fijos, cobros pendientes, " +
+        "plazos fiscales y alertas de riesgo.",
+      argsSchema: {
+        months: z
+          .string()
+          .optional()
+          .describe("Number of months to forecast, e.g. '3' (default: 3) / Meses a proyectar"),
+      },
+    },
+    async ({ months }) => {
+      const forecastMonths = months ? parseInt(months, 10) || 3 : 3;
+      const monthLabel = forecastMonths === 1 ? "month" : "months";
+
+      return {
+        messages: [
+          {
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text:
+                `Create a cash flow forecast for the next ${forecastMonths} ${monthLabel}. Follow these steps:\n\n` +
+                `1. BUSINESS CONTEXT\n` +
+                `   - Call get_business_context to understand the business setup and currency\n` +
+                `   - Call get_monthly_summary for the current month to establish the baseline\n\n` +
+                `2. PREDICTABLE INCOME\n` +
+                `   - Use list_invoices with status "sent" to find expected incoming payments\n` +
+                `   - Use list_invoices to identify recurring invoice patterns (same client, similar amounts, regular intervals)\n` +
+                `   - For each recurring pattern, project the expected amount per month\n` +
+                `   - Note: recurring invoices are the most reliable income predictor\n\n` +
+                `3. PREDICTABLE EXPENSES\n` +
+                `   - Use list_expenses to review the last 3 months of expenses\n` +
+                `   - Identify recurring expenses (same vendor, similar amounts monthly)\n` +
+                `   - Read frihet://config/expense-categories to understand categories\n` +
+                `   - Project fixed costs per month (software, rent, insurance, subscriptions)\n` +
+                `   - Estimate variable costs based on recent trends\n\n` +
+                `4. OVERDUE RECEIVABLES\n` +
+                `   - Use list_invoices with status "overdue" to find overdue invoices\n` +
+                `   - Estimate collection probability:\n` +
+                `     - 0-30 days overdue: 80% likely to collect\n` +
+                `     - 31-60 days overdue: 50% likely\n` +
+                `     - 61-90 days overdue: 25% likely\n` +
+                `     - 90+ days overdue: 10% likely (consider write-off)\n` +
+                `   - Add weighted amounts to the first forecast month\n\n` +
+                `5. TAX OBLIGATIONS\n` +
+                `   - Read frihet://tax/calendar for upcoming tax deadlines in the forecast period\n` +
+                `   - Estimate quarterly tax payments based on current quarter activity\n` +
+                `   - Include these as cash outflows in the months they are due\n\n` +
+                `6. MONTHLY PROJECTION\n` +
+                `   For each of the next ${forecastMonths} months, present:\n` +
+                `   - Expected income (recurring + one-time expected payments)\n` +
+                `   - Expected expenses (fixed + estimated variable)\n` +
+                `   - Tax payments due (if any)\n` +
+                `   - Net cash flow = income - expenses - taxes\n` +
+                `   - Running cash position (cumulative)\n\n` +
+                `7. RISK ANALYSIS\n` +
+                `   Flag the following risks:\n` +
+                `   - CLIENT CONCENTRATION: If any single client represents >30% of projected income,\n` +
+                `     flag the dependency risk and suggest diversification\n` +
+                `   - SEASONALITY: Compare with previous months — if income is trending down,\n` +
+                `     flag and estimate the impact\n` +
+                `   - TAX DEADLINES: Highlight months with large tax outflows that could cause a cash crunch\n` +
+                `   - OVERDUE EXPOSURE: Total amount at risk from overdue invoices\n` +
+                `   - NEGATIVE MONTHS: Any months where projected cash flow is negative — suggest actions\n\n` +
+                `8. RECOMMENDATIONS\n` +
+                `   - If cash flow is tight: suggest invoicing earlier, following up on overdue, reducing discretionary spend\n` +
+                `   - If cash flow is healthy: suggest setting aside tax reserves, building an emergency buffer\n` +
+                `   - Provide a "worst case" scenario (only 50% of expected income arrives)`,
+            },
+          },
+        ],
+      };
+    },
+  );
+
+  // -- invoice-aging-review --
+
+  server.registerPrompt(
+    "invoice-aging-review",
+    {
+      title: "Invoice Aging Review",
+      description:
+        "Accounts receivable aging analysis: group unpaid invoices by aging bucket (0-30, 31-60, 61-90, 90+ days), " +
+        "identify top debtors, and suggest collection actions. " +
+        "/ Análisis de antigüedad de cuentas por cobrar: agrupar facturas impagadas por tramos, " +
+        "identificar mayores deudores y sugerir acciones de cobro.",
+    },
+    async () => ({
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text:
+              `Perform an accounts receivable aging analysis. Follow these steps:\n\n` +
+              `1. GATHER UNPAID INVOICES\n` +
+              `   - Use list_invoices to find all invoices with status "sent" or "overdue"\n` +
+              `   - For each invoice, note: invoice ID/number, client name, amount (with tax),\n` +
+              `     issue date, due date, and days since due date\n` +
+              `   - If due date is in the future, calculate days until due (negative = not yet due)\n\n` +
+              `2. AGING BUCKETS\n` +
+              `   Group all unpaid invoices into these buckets:\n` +
+              `   - CURRENT (0-30 days): Not yet due or less than 30 days overdue\n` +
+              `   - 31-60 DAYS: Between 31 and 60 days overdue\n` +
+              `   - 61-90 DAYS: Between 61 and 90 days overdue\n` +
+              `   - 90+ DAYS: More than 90 days overdue (high risk)\n` +
+              `   For each bucket, show:\n` +
+              `   - Number of invoices\n` +
+              `   - Total amount\n` +
+              `   - Percentage of total outstanding receivables\n` +
+              `   - List of invoices in that bucket\n\n` +
+              `3. TOP DEBTORS\n` +
+              `   - Use get_client for each client with unpaid invoices to get their details\n` +
+              `   - Rank clients by total outstanding amount (highest first)\n` +
+              `   - For each top debtor, show:\n` +
+              `     - Client name and contact info\n` +
+              `     - Number of unpaid invoices\n` +
+              `     - Total outstanding amount\n` +
+              `     - Oldest unpaid invoice date\n` +
+              `     - Average days overdue\n\n` +
+              `4. COLLECTION ACTIONS\n` +
+              `   Suggest specific actions for each bucket:\n` +
+              `   - CURRENT (0-30 days): No action needed, monitor normally\n` +
+              `   - 31-60 DAYS: Send a friendly payment reminder (use overdue-followup prompt pattern)\n` +
+              `   - 61-90 DAYS: Escalate — phone call + formal written reminder,\n` +
+              `     consider pausing new work for this client\n` +
+              `   - 90+ DAYS: Final notice before debt collection,\n` +
+              `     evaluate write-off vs collection agency cost,\n` +
+              `     stop all new work for this client\n\n` +
+              `5. WRITE-OFF CANDIDATES\n` +
+              `   - Flag any invoices 90+ days overdue with amounts under €100 — likely not worth pursuing\n` +
+              `   - For larger amounts 90+ days, suggest formal demand letter before write-off\n` +
+              `   - Note: written-off invoices may still be tax-deductible as bad debt\n` +
+              `     (requires documentation of collection attempts)\n\n` +
+              `6. SUMMARY DASHBOARD\n` +
+              `   Present a clear overview:\n` +
+              `   - Total accounts receivable (all unpaid invoices)\n` +
+              `   - Breakdown by aging bucket (amount and % of total)\n` +
+              `   - Weighted collection estimate:\n` +
+              `     Current: 95% collectible, 31-60: 80%, 61-90: 50%, 90+: 20%\n` +
+              `   - Expected collectible amount vs total outstanding\n` +
+              `   - Number of clients with overdue invoices\n` +
+              `   - Most urgent actions to take (prioritized list)`,
+          },
+        },
+      ],
+    }),
+  );
+
   // -- expense-batch --
 
   server.registerPrompt(
