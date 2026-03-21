@@ -33,7 +33,7 @@ You:     "Create an invoice for TechStart SL, 40 hours of consulting at 75 EUR/h
 Claude:  Done. Invoice INV-2026-089 created. Total: 3,000.00 EUR + 21% IVA = 3,630.00 EUR.
 ```
 
-35 tools. 8 resources. 7 prompts. Structured output on every tool. Zero boilerplate.
+35 tools. 11 resources. 10 prompts. Structured output on every tool. Zero boilerplate.
 
 ---
 
@@ -430,7 +430,7 @@ npm run build   # must pass before submitting
 
 | Package | What it is |
 |---------|-----------|
-| [`@frihet/mcp-server`](https://www.npmjs.com/package/@frihet/mcp-server) | This MCP server (35 tools, 8 resources, 7 prompts) |
+| [`@frihet/mcp-server`](https://www.npmjs.com/package/@frihet/mcp-server) | This MCP server (35 tools, 11 resources, 10 prompts) |
 | [`@frihet/sdk`](https://github.com/Frihet-io/frihet-sdk) | TypeScript SDK (`frihet.invoices.create()`) |
 | [`frihet`](https://www.npmjs.com/package/frihet) | CLI (`frihet invoices list --status overdue`) |
 | [REST API](https://docs.frihet.io/desarrolladores/api-rest) | OpenAPI 3.1 at `api.frihet.io/v1` |
