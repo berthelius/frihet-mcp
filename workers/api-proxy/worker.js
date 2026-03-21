@@ -126,7 +126,7 @@ export default {
     const url = new URL(request.url);
 
     // Public routes: forward to /publicApi/ (no /api/ prefix) for root-level endpoints
-    const PUBLIC_PATHS = ['/', '/openapi.json', '/openapi.yaml', '/v1', '/v1/', '/v1/openapi.json', '/v1/openapi.yaml'];
+    const PUBLIC_PATHS = ['/', '/openapi.json', '/openapi.yaml', '/v1', '/v1/', '/v1/openapi.json', '/v1/openapi.yaml', '/health', '/v1/health'];
     if (request.method === "GET" && PUBLIC_PATHS.includes(url.pathname)) {
       const upstream = new URL(url.pathname, UPSTREAM);
       upstream.pathname = "/publicApi" + url.pathname;
