@@ -17,7 +17,7 @@
   <a href="https://smithery.ai/server/frihet/frihet-mcp"><img src="https://smithery.ai/badge/frihet/frihet-mcp" alt="Smithery installs"></a>
   <a href="https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet"><img src="https://img.shields.io/badge/MCP-Registry-18181b?style=flat&labelColor=09090b" alt="MCP Registry"></a>
   <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
-  <img src="https://img.shields.io/badge/tools-35-18181b?style=flat&labelColor=09090b" alt="35 tools">
+  <img src="https://img.shields.io/badge/tools-44-18181b?style=flat&labelColor=09090b" alt="44 tools">
   <img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18">
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-18181b?style=flat&labelColor=09090b" alt="TypeScript"></a>
 </p>
@@ -33,7 +33,7 @@ You:     "Create an invoice for TechStart SL, 40 hours of consulting at 75 EUR/h
 Claude:  Done. Invoice INV-2026-089 created. Total: 3,000.00 EUR + 21% IVA = 3,630.00 EUR.
 ```
 
-35 tools. 11 resources. 10 prompts. Structured output on every tool. Zero boilerplate.
+44 tools. 11 resources. 10 prompts. Structured output on every tool. Zero boilerplate.
 
 ---
 
@@ -152,7 +152,7 @@ Talk to your ERP. These are real prompts, not marketing copy.
 
 ## What to expect
 
-This MCP is a **structured data interface** -- you describe what you want in natural language, and the AI creates, queries, or modifies business records in Frihet. All 35 tools are CRUD operations over the REST API.
+This MCP is a **structured data interface** -- you describe what you want in natural language, and the AI creates, queries, or modifies business records in Frihet. All 44 tools are CRUD operations over the REST API.
 
 **Works great:**
 
@@ -251,7 +251,7 @@ If you need to digitize paper invoices or receipts, extract the data first (e.g.
 | `get_quarterly_taxes` | Quarterly tax prep: Modelo 303/130 fields, collected vs deductible, liability |
 | `duplicate_invoice` | Clone an invoice for recurring billing (copies items/client/tax, starts as draft) |
 
-All 35 tools return **structured output** via `outputSchema` -- typed JSON, not raw text. List tools return paginated results (`{ data, total, limit, offset }`).
+All 44 tools return **structured output** via `outputSchema` -- typed JSON, not raw text. List tools return paginated results (`{ data, total, limit, offset }`).
 
 ---
 
@@ -430,7 +430,7 @@ npm run build   # must pass before submitting
 
 | Package | What it is |
 |---------|-----------|
-| [`@frihet/mcp-server`](https://www.npmjs.com/package/@frihet/mcp-server) | This MCP server (35 tools, 11 resources, 10 prompts) |
+| [`@frihet/mcp-server`](https://www.npmjs.com/package/@frihet/mcp-server) | This MCP server (44 tools, 11 resources, 10 prompts) |
 | [`@frihet/sdk`](https://github.com/Frihet-io/frihet-sdk) | TypeScript SDK (`frihet.invoices.create()`) |
 | [`frihet`](https://www.npmjs.com/package/frihet) | CLI (`frihet invoices list --status overdue`) |
 | [REST API](https://docs.frihet.io/desarrolladores/api-rest) | OpenAPI 3.1 at `api.frihet.io/v1` |

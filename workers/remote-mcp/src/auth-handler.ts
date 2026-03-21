@@ -36,7 +36,7 @@ app.get("/", (c) => {
       authorization_server:
         "https://mcp.frihet.io/.well-known/oauth-authorization-server",
     },
-    tools: 35,
+    tools: 44,
     resources: 11,
     prompts: 10,
   });
