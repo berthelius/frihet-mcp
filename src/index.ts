@@ -70,12 +70,12 @@ function main(): void {
     version: "1.4.0",
     description:
       "AI-native MCP server for Frihet ERP — invoices, expenses, clients, products, quotes, and webhooks. " +
-      "Provides 44 tools (including business context, monthly summaries, quarterly taxes, and invoice duplication), " +
+      "Provides 52 tools (including business context, monthly summaries, quarterly taxes, invoice duplication, and CRM subcollections), " +
       "11 resources (8 static + 3 live), and 10 workflow prompts for business management " +
       "with full Spanish tax compliance (IVA, IGIC, IPSI).",
   });
 
-  // Register all 44 tools (36 CRUD + 4 intelligence + 4 actions)
+  // Register all 52 tools (36 CRUD + 8 CRM + 4 intelligence + 4 actions)
   registerAllTools(server, client);
 
   // Register 11 resources (8 static + 3 dynamic via API)
@@ -90,7 +90,7 @@ function main(): void {
   // Connect via stdio transport
   const transport = new StdioServerTransport();
   server.connect(transport).then(() => {
-    console.error("[frihet-mcp] v1.4.0 | 44 tools | https://github.com/Frihet-io/frihet-mcp");
+    console.error("[frihet-mcp] v1.4.0 | 52 tools | https://github.com/Frihet-io/frihet-mcp");
     log({
       level: "info",
       message: "Frihet MCP server running on stdio",

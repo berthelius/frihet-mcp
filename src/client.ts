@@ -469,6 +469,65 @@ export class FrihetClient {
     return this.request("DELETE", `/webhooks/${encodeURIComponent(id)}`);
   }
 
+  // ---------------------------------------------------------------- CRM: Contacts
+  // ----------------------------------------------------------------
+
+  async listClientContacts(
+    clientId: string,
+    params?: { limit?: number; offset?: number },
+  ): Promise<PaginatedResponse<Record<string, unknown>>> {
+    return this.requestPaginated("GET", `/clients/${encodeURIComponent(clientId)}/contacts`, undefined, {
+      limit: params?.limit,
+      offset: params?.offset,
+    });
+  }
+
+  async createClientContact(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", `/clients/${encodeURIComponent(clientId)}/contacts`, data);
+  }
+
+  async deleteClientContact(clientId: string, contactId: string): Promise<void> {
+    return this.request("DELETE", `/clients/${encodeURIComponent(clientId)}/contacts/${encodeURIComponent(contactId)}`);
+  }
+
+  // ---------------------------------------------------------------- CRM: Activities
+  // ----------------------------------------------------------------
+
+  async listClientActivities(
+    clientId: string,
+    params?: { limit?: number; offset?: number },
+  ): Promise<PaginatedResponse<Record<string, unknown>>> {
+    return this.requestPaginated("GET", `/clients/${encodeURIComponent(clientId)}/activities`, undefined, {
+      limit: params?.limit,
+      offset: params?.offset,
+    });
+  }
+
+  async logClientActivity(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", `/clients/${encodeURIComponent(clientId)}/activities`, data);
+  }
+
+  // ---------------------------------------------------------------- CRM: Notes
+  // ----------------------------------------------------------------
+
+  async listClientNotes(
+    clientId: string,
+    params?: { limit?: number; offset?: number },
+  ): Promise<PaginatedResponse<Record<string, unknown>>> {
+    return this.requestPaginated("GET", `/clients/${encodeURIComponent(clientId)}/notes`, undefined, {
+      limit: params?.limit,
+      offset: params?.offset,
+    });
+  }
+
+  async createClientNote(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", `/clients/${encodeURIComponent(clientId)}/notes`, data);
+  }
+
+  async deleteClientNote(clientId: string, noteId: string): Promise<void> {
+    return this.request("DELETE", `/clients/${encodeURIComponent(clientId)}/notes/${encodeURIComponent(noteId)}`);
+  }
+
   // ---------------------------------------------------------------- Intelligence
   // ----------------------------------------------------------------
 

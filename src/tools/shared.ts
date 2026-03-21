@@ -439,6 +439,36 @@ export const webhookItemOutput = z.object({
   updatedAt: z.string().optional(),
 }).passthrough();
 
+/* --- CRM subcollection item schemas -------------------------------- */
+
+export const contactItemOutput = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  role: z.string().optional(),
+  isPrimary: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+export const activityItemOutput = z.object({
+  id: z.string(),
+  type: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  date: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
+export const noteItemOutput = z.object({
+  id: z.string(),
+  content: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
 /** Schema for action results (send, mark paid, etc.) */
 export const actionResultOutput = z.object({
   success: z.boolean(),

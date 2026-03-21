@@ -67,6 +67,20 @@ export interface IFrihetClient {
   updateWebhook(id: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
   deleteWebhook(id: string): Promise<void>;
 
+  // CRM: Contacts (subcollection of clients)
+  listClientContacts(clientId: string, params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  createClientContact(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
+  deleteClientContact(clientId: string, contactId: string): Promise<void>;
+
+  // CRM: Activities (subcollection of clients)
+  listClientActivities(clientId: string, params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  logClientActivity(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
+
+  // CRM: Notes (subcollection of clients)
+  listClientNotes(clientId: string, params?: { limit?: number; offset?: number }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  createClientNote(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
+  deleteClientNote(clientId: string, noteId: string): Promise<void>;
+
   // Intelligence endpoints
   getBusinessContext(): Promise<Record<string, unknown>>;
   getMonthlySummary(month?: string): Promise<Record<string, unknown>>;
