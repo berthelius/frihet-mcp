@@ -187,14 +187,18 @@ export class FrihetClient {
   // ----------------------------------------------------------------
 
   async listInvoices(
-    params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string },
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; status?: string; from?: string; to?: string; clientId?: string; seriesId?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/invoices", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
       status: params?.status,
       from: params?.from,
       to: params?.to,
+      clientId: params?.clientId,
+      seriesId: params?.seriesId,
     });
   }
 
@@ -219,12 +223,14 @@ export class FrihetClient {
 
   async searchInvoices(
     query: string,
-    params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string },
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; status?: string; from?: string; to?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/invoices", undefined, {
       q: query,
       limit: params?.limit,
       offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
       status: params?.status,
       from: params?.from,
       to: params?.to,
@@ -235,13 +241,17 @@ export class FrihetClient {
   // ----------------------------------------------------------------
 
   async listExpenses(
-    params?: { limit?: number; offset?: number; from?: string; to?: string },
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; from?: string; to?: string; vendorId?: string; category?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/expenses", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
       from: params?.from,
       to: params?.to,
+      vendorId: params?.vendorId,
+      category: params?.category,
     });
   }
 
@@ -268,11 +278,15 @@ export class FrihetClient {
   // ----------------------------------------------------------------
 
   async listClients(
-    params?: { limit?: number; offset?: number },
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; q?: string; stage?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/clients", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
+      q: params?.q,
+      stage: params?.stage,
     });
   }
 
@@ -299,11 +313,15 @@ export class FrihetClient {
   // ----------------------------------------------------------------
 
   async listProducts(
-    params?: { limit?: number; offset?: number },
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; q?: string; isActive?: boolean },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/products", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
+      q: params?.q,
+      isActive: params?.isActive !== undefined ? (params.isActive ? 1 : 0) : undefined,
     });
   }
 
@@ -330,14 +348,18 @@ export class FrihetClient {
   // ----------------------------------------------------------------
 
   async listQuotes(
-    params?: { limit?: number; offset?: number; status?: string; from?: string; to?: string },
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; status?: string; from?: string; to?: string; clientId?: string; seriesId?: string },
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
     return this.requestPaginated("GET", "/quotes", undefined, {
       limit: params?.limit,
       offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
       status: params?.status,
       from: params?.from,
       to: params?.to,
+      clientId: params?.clientId,
+      seriesId: params?.seriesId,
     });
   }
 
@@ -358,6 +380,62 @@ export class FrihetClient {
 
   async deleteQuote(id: string): Promise<void> {
     return this.request("DELETE", `/quotes/${encodeURIComponent(id)}`);
+  }
+
+  // ---------------------------------------------------------------- Vendors
+  // ----------------------------------------------------------------
+
+  async listVendors(
+    params?: { q?: string; limit?: number; offset?: number; after?: string; fields?: string },
+  ): Promise<PaginatedResponse<Record<string, unknown>>> {
+    return this.requestPaginated("GET", "/vendors", undefined, {
+      q: params?.q,
+      limit: params?.limit,
+      offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
+    });
+  }
+
+  async getVendor(id: string): Promise<Record<string, unknown>> {
+    return this.request("GET", `/vendors/${encodeURIComponent(id)}`);
+  }
+
+  async createVendor(data: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", "/vendors", data);
+  }
+
+  async updateVendor(
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.request("PATCH", `/vendors/${encodeURIComponent(id)}`, data);
+  }
+
+  async deleteVendor(id: string): Promise<void> {
+    return this.request("DELETE", `/vendors/${encodeURIComponent(id)}`);
+  }
+
+  // ---------------------------------------------------------------- Invoice Actions
+  // ----------------------------------------------------------------
+
+  async sendInvoice(id: string, to?: string): Promise<Record<string, unknown>> {
+    return this.request("POST", `/invoices/${encodeURIComponent(id)}/send`, to ? { to } : undefined);
+  }
+
+  async markInvoicePaid(id: string, paidDate?: string): Promise<Record<string, unknown>> {
+    return this.request("POST", `/invoices/${encodeURIComponent(id)}/paid`, paidDate ? { paidDate } : undefined);
+  }
+
+  async getInvoicePdf(id: string): Promise<Record<string, unknown>> {
+    return this.request("GET", `/invoices/${encodeURIComponent(id)}/pdf`);
+  }
+
+  // ---------------------------------------------------------------- Quote Actions
+  // ----------------------------------------------------------------
+
+  async sendQuote(id: string, to?: string): Promise<Record<string, unknown>> {
+    return this.request("POST", `/quotes/${encodeURIComponent(id)}/send`, to ? { to } : undefined);
   }
 
   // ---------------------------------------------------------------- Webhooks

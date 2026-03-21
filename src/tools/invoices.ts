@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, invoiceItemOutput, actionResultOutput, pdfResultOutput } from "./shared.js";
 
 const invoiceItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -33,6 +33,14 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .enum(["draft", "sent", "paid", "overdue", "cancelled"])
           .optional()
           .describe("Filter by invoice status / Filtrar por estado"),
+        clientId: z
+          .string()
+          .optional()
+          .describe("Filter by client ID / Filtrar por ID de cliente"),
+        seriesId: z
+          .string()
+          .optional()
+          .describe("Filter by invoice series ID / Filtrar por ID de serie"),
         from: z
           .string()
           .optional()
@@ -41,6 +49,10 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .string()
           .optional()
           .describe("End date filter in ISO 8601 (YYYY-MM-DD) / Fecha fin"),
+        fields: z
+          .string()
+          .optional()
+          .describe("Comma-separated field names to return (e.g. 'id,clientName,total') / Campos a devolver"),
         limit: z
           .number()
           .int()
@@ -54,11 +66,15 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .min(0)
           .optional()
           .describe("Number of results to skip / Resultados a saltar"),
+        after: z
+          .string()
+          .optional()
+          .describe("Cursor for cursor-based pagination (document ID) / Cursor para paginacion basada en cursor"),
       },
       outputSchema: paginatedOutput(invoiceItemOutput),
     },
-    async ({ status, from, to, limit, offset }) => withToolLogging("list_invoices", async () => {
-      const result = await client.listInvoices({ limit, offset, status, from, to });
+    async ({ status, from, to, limit, offset, clientId, seriesId, fields, after }) => withToolLogging("list_invoices", async () => {
+      const result = await client.listInvoices({ limit, offset, after, fields, status, from, to, clientId, seriesId });
       const hints = enrichResponse("invoices", "list", result.data);
       return {
         content: [listContent(formatPaginatedResponse("invoices", result))],
@@ -237,20 +253,104 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
           .string()
           .optional()
           .describe("End date filter (YYYY-MM-DD) / Fecha fin"),
+        fields: z
+          .string()
+          .optional()
+          .describe("Comma-separated field names to return / Campos a devolver"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
+        after: z
+          .string()
+          .optional()
+          .describe("Cursor for cursor-based pagination (document ID) / Cursor para paginacion"),
       },
       outputSchema: paginatedOutput(invoiceItemOutput),
     },
-    async ({ query, status, from, to, limit, offset }) => withToolLogging("search_invoices", async () => {
+    async ({ query, status, from, to, limit, offset, fields, after }) => withToolLogging("search_invoices", async () => {
       const result = query
-        ? await client.searchInvoices(query, { limit, offset, status, from, to })
-        : await client.listInvoices({ limit, offset, status, from, to });
+        ? await client.searchInvoices(query, { limit, offset, after, fields, status, from, to })
+        : await client.listInvoices({ limit, offset, after, fields, status, from, to });
       const label = query ? `invoices matching "${query}"` : "invoices";
       const hints = enrichResponse("invoices", "list", result.data);
       return {
         content: [listContent(formatPaginatedResponse(label, result))],
         structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
+      };
+    }),
+  );
+
+  // -- send_invoice --
+
+  server.registerTool(
+    "send_invoice",
+    {
+      title: "Send Invoice",
+      description:
+        "Send an invoice to the client via email. Optionally override the recipient email address. " +
+        "The invoice must exist and should not already be cancelled. " +
+        "/ Envia una factura al cliente por email. Opcionalmente se puede cambiar el email destinatario.",
+      annotations: UPDATE_ANNOTATIONS,
+      inputSchema: {
+        id: z.string().describe("Invoice ID / ID de la factura"),
+        to: z.string().optional().describe("Override recipient email / Email destinatario alternativo"),
+      },
+      outputSchema: actionResultOutput,
+    },
+    async ({ id, to }) => withToolLogging("send_invoice", async () => {
+      const result = await client.sendInvoice(id, to);
+      return {
+        content: [mutateContent(formatRecord("Invoice sent", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
+  );
+
+  // -- mark_invoice_paid --
+
+  server.registerTool(
+    "mark_invoice_paid",
+    {
+      title: "Mark Invoice Paid",
+      description:
+        "Mark an invoice as paid. Optionally specify the payment date. " +
+        "Defaults to today if no date is provided. " +
+        "/ Marca una factura como pagada. Opcionalmente especifica la fecha de pago.",
+      annotations: UPDATE_ANNOTATIONS,
+      inputSchema: {
+        id: z.string().describe("Invoice ID / ID de la factura"),
+        paidDate: z.string().optional().describe("Payment date (YYYY-MM-DD), defaults to today / Fecha de pago"),
+      },
+      outputSchema: actionResultOutput,
+    },
+    async ({ id, paidDate }) => withToolLogging("mark_invoice_paid", async () => {
+      const result = await client.markInvoicePaid(id, paidDate);
+      return {
+        content: [mutateContent(formatRecord("Invoice marked as paid", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
+  );
+
+  // -- get_invoice_pdf --
+
+  server.registerTool(
+    "get_invoice_pdf",
+    {
+      title: "Get Invoice PDF",
+      description:
+        "Get the PDF for an invoice. Returns a URL to download the PDF or binary info. " +
+        "/ Obtiene el PDF de una factura. Devuelve una URL de descarga o informacion del binario.",
+      annotations: READ_ONLY_ANNOTATIONS,
+      inputSchema: {
+        id: z.string().describe("Invoice ID / ID de la factura"),
+      },
+      outputSchema: pdfResultOutput,
+    },
+    async ({ id }) => withToolLogging("get_invoice_pdf", async () => {
+      const result = await client.getInvoicePdf(id);
+      return {
+        content: [getContent(formatRecord("Invoice PDF", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }),
   );

@@ -32,13 +32,29 @@ export function registerClientTools(server: McpServer, client: IFrihetClient): v
         "Devuelve informacion de contacto, NIF/CIF y direcciones.",
       annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
+        q: z
+          .string()
+          .optional()
+          .describe("Search by name or email / Buscar por nombre o email"),
+        stage: z
+          .enum(["lead", "contacted", "proposal", "active", "inactive", "lost"])
+          .optional()
+          .describe("Filter by CRM stage / Filtrar por etapa del CRM"),
+        fields: z
+          .string()
+          .optional()
+          .describe("Comma-separated field names to return (e.g. 'id,name,email') / Campos a devolver"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
+        after: z
+          .string()
+          .optional()
+          .describe("Cursor for cursor-based pagination (document ID) / Cursor para paginacion basada en cursor"),
       },
       outputSchema: paginatedOutput(clientItemOutput),
     },
-    async ({ limit, offset }) => withToolLogging("list_clients", async () => {
-      const result = await client.listClients({ limit, offset });
+    async ({ limit, offset, q, stage, fields, after }) => withToolLogging("list_clients", async () => {
+      const result = await client.listClients({ limit, offset, after, fields, q, stage });
       return {
         content: [listContent(formatPaginatedResponse("clients", result))],
         structuredContent: result as unknown as Record<string, unknown>,

@@ -172,9 +172,15 @@ export function formatPaginatedResponse(
   }
 
   if (response.total > response.offset + response.data.length) {
+    const nextOffset = response.offset + response.data.length;
     lines.push(
-      `More results available. Use offset=${response.offset + response.data.length} to see the next page.`,
+      `More results available. Use offset=${nextOffset} to see the next page.`,
     );
+    if (response.nextCursor) {
+      lines.push(
+        `Cursor pagination: use after='${response.nextCursor}' for efficient cursor-based pagination.`,
+      );
+    }
   }
 
   return truncateResponse(lines.join("\n"));
@@ -277,6 +283,12 @@ export function enrichResponse(
     suggestions.push("create_quote — Send a quote to this new client");
   }
 
+  // After creating a vendor
+  if (operation === "create" && resource === "vendors") {
+    suggestions.push("create_expense — Record an expense from this vendor");
+    suggestions.push("list_vendors — View all vendors");
+  }
+
   // After creating a quote
   if (operation === "create" && resource === "quotes") {
     suggestions.push("get_quote — View the quote with calculated totals");
@@ -321,6 +333,7 @@ export function paginatedOutput<T extends z.ZodType>(itemSchema: T) {
     total: z.number(),
     limit: z.number(),
     offset: z.number(),
+    nextCursor: z.string().optional(),
   });
 }
 
@@ -405,6 +418,17 @@ export const quoteItemOutput = z.object({
   updatedAt: z.string().optional(),
 }).passthrough();
 
+export const vendorItemOutput = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  taxId: z.string().optional(),
+  address: addressOutputSchema,
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
 export const webhookItemOutput = z.object({
   id: z.string(),
   url: z.string(),
@@ -413,6 +437,20 @@ export const webhookItemOutput = z.object({
   secret: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+}).passthrough();
+
+/** Schema for action results (send, mark paid, etc.) */
+export const actionResultOutput = z.object({
+  success: z.boolean(),
+  id: z.string(),
+  message: z.string().optional(),
+}).passthrough();
+
+/** Schema for PDF results */
+export const pdfResultOutput = z.object({
+  id: z.string(),
+  url: z.string().optional(),
+  contentType: z.string().optional(),
 }).passthrough();
 
 /* ------------------------------------------------------------------ */

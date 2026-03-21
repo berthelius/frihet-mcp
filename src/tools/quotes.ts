@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import type { IFrihetClient } from "../client-interface.js";
-import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput } from "./shared.js";
+import { withToolLogging, formatPaginatedResponse, formatRecord, listContent, getContent, mutateContent, enrichResponse, READ_ONLY_ANNOTATIONS, CREATE_ANNOTATIONS, UPDATE_ANNOTATIONS, DELETE_ANNOTATIONS, paginatedOutput, deleteResultOutput, quoteItemOutput, actionResultOutput } from "./shared.js";
 
 const quoteItemSchema = z.object({
   description: z.string().describe("Description of the line item / Descripcion del concepto"),
@@ -33,6 +33,14 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
           .enum(["draft", "sent", "accepted", "rejected", "expired"])
           .optional()
           .describe("Filter by quote status / Filtrar por estado"),
+        clientId: z
+          .string()
+          .optional()
+          .describe("Filter by client ID / Filtrar por ID de cliente"),
+        seriesId: z
+          .string()
+          .optional()
+          .describe("Filter by quote series ID / Filtrar por ID de serie"),
         from: z
           .string()
           .optional()
@@ -41,13 +49,21 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
           .string()
           .optional()
           .describe("End date filter (YYYY-MM-DD) / Fecha fin"),
+        fields: z
+          .string()
+          .optional()
+          .describe("Comma-separated field names to return (e.g. 'id,clientName,total') / Campos a devolver"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
+        after: z
+          .string()
+          .optional()
+          .describe("Cursor for cursor-based pagination (document ID) / Cursor para paginacion basada en cursor"),
       },
       outputSchema: paginatedOutput(quoteItemOutput),
     },
-    async ({ status, from, to, limit, offset }) => withToolLogging("list_quotes", async () => {
-      const result = await client.listQuotes({ limit, offset, status, from, to });
+    async ({ status, from, to, limit, offset, clientId, seriesId, fields, after }) => withToolLogging("list_quotes", async () => {
+      const result = await client.listQuotes({ limit, offset, after, fields, status, from, to, clientId, seriesId });
       return {
         content: [listContent(formatPaginatedResponse("quotes", result))],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -173,6 +189,32 @@ export function registerQuoteTools(server: McpServer, client: IFrihetClient): vo
       return {
         content: [mutateContent(`Quote ${id} deleted successfully. / Presupuesto ${id} eliminado correctamente.`)],
         structuredContent: { success: true, id } as unknown as Record<string, unknown>,
+      };
+    }),
+  );
+
+  // -- send_quote --
+
+  server.registerTool(
+    "send_quote",
+    {
+      title: "Send Quote",
+      description:
+        "Send a quote/estimate to the client via email. Optionally override the recipient email address. " +
+        "The quote must exist and should not already be expired or rejected. " +
+        "/ Envia un presupuesto al cliente por email. Opcionalmente se puede cambiar el email destinatario.",
+      annotations: UPDATE_ANNOTATIONS,
+      inputSchema: {
+        id: z.string().describe("Quote ID / ID del presupuesto"),
+        to: z.string().optional().describe("Override recipient email / Email destinatario alternativo"),
+      },
+      outputSchema: actionResultOutput,
+    },
+    async ({ id, to }) => withToolLogging("send_quote", async () => {
+      const result = await client.sendQuote(id, to);
+      return {
+        content: [mutateContent(formatRecord("Quote sent", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }),
   );

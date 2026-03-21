@@ -9,6 +9,7 @@ export interface PaginatedResponse<T> {
   total: number;
   limit: number;
   offset: number;
+  nextCursor?: string;
 }
 
 export interface ApiError {

@@ -21,6 +21,14 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
         "/ Lista todos los gastos con paginacion y filtros de fecha opcionales.",
       annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
+        vendorId: z
+          .string()
+          .optional()
+          .describe("Filter by vendor ID / Filtrar por ID de proveedor"),
+        category: z
+          .string()
+          .optional()
+          .describe("Filter by expense category (e.g. 'office', 'travel') / Filtrar por categoria"),
         from: z
           .string()
           .optional()
@@ -29,13 +37,21 @@ export function registerExpenseTools(server: McpServer, client: IFrihetClient): 
           .string()
           .optional()
           .describe("End date filter (YYYY-MM-DD) / Fecha fin"),
+        fields: z
+          .string()
+          .optional()
+          .describe("Comma-separated field names to return (e.g. 'id,description,amount') / Campos a devolver"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
+        after: z
+          .string()
+          .optional()
+          .describe("Cursor for cursor-based pagination (document ID) / Cursor para paginacion basada en cursor"),
       },
       outputSchema: paginatedOutput(expenseItemOutput),
     },
-    async ({ from, to, limit, offset }) => withToolLogging("list_expenses", async () => {
-      const result = await client.listExpenses({ limit, offset, from, to });
+    async ({ from, to, limit, offset, vendorId, category, fields, after }) => withToolLogging("list_expenses", async () => {
+      const result = await client.listExpenses({ limit, offset, after, fields, from, to, vendorId, category });
       const hints = enrichResponse("expenses", "list", result.data);
       return {
         content: [listContent(formatPaginatedResponse("expenses", result))],

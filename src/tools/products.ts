@@ -21,13 +21,29 @@ export function registerProductTools(server: McpServer, client: IFrihetClient): 
         "Los productos son conceptos reutilizables para facturas y presupuestos.",
       annotations: READ_ONLY_ANNOTATIONS,
       inputSchema: {
+        q: z
+          .string()
+          .optional()
+          .describe("Search by product name / Buscar por nombre de producto"),
+        isActive: z
+          .boolean()
+          .optional()
+          .describe("Filter by active status / Filtrar por estado activo"),
+        fields: z
+          .string()
+          .optional()
+          .describe("Comma-separated field names to return (e.g. 'id,name,unitPrice') / Campos a devolver"),
         limit: z.number().int().min(1).max(100).optional().describe("Max results (1-100) / Resultados maximos"),
         offset: z.number().int().min(0).optional().describe("Offset / Desplazamiento"),
+        after: z
+          .string()
+          .optional()
+          .describe("Cursor for cursor-based pagination (document ID) / Cursor para paginacion basada en cursor"),
       },
       outputSchema: paginatedOutput(productItemOutput),
     },
-    async ({ limit, offset }) => withToolLogging("list_products", async () => {
-      const result = await client.listProducts({ limit, offset });
+    async ({ limit, offset, q, isActive, fields, after }) => withToolLogging("list_products", async () => {
+      const result = await client.listProducts({ limit, offset, after, fields, q, isActive });
       return {
         content: [listContent(formatPaginatedResponse("products", result))],
         structuredContent: result as unknown as Record<string, unknown>,
