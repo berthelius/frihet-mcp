@@ -1,9 +1,10 @@
 /**
- * Static MCP Resources for the Frihet ERP server.
+ * MCP Resources for the Frihet ERP server (11 total: 7 static + 4 dynamic).
  *
  * Resources are read-only reference data that LLMs can access without making
- * API calls. They encode domain knowledge (tax rates, deadlines, categories)
- * that would otherwise require the user to explain every time.
+ * API calls. They encode domain knowledge (tax rates, deadlines, categories,
+ * currencies, countries) that would otherwise require the user to explain
+ * every time.
  *
  * All resources use the `frihet://` URI scheme.
  */
@@ -278,6 +279,113 @@ Best practices:
   - For partial payments, keep status as sent until full payment
   - cancelled requires a reason (notes field) for audit trail`;
 
+const CURRENCIES = JSON.stringify({
+  EUR: { name: "Euro", symbol: "\u20ac", decimals: 2, format: "1.234,56 \u20ac", countries: ["ES","DE","FR","IT","NL","PT","BE","AT","IE","FI","GR","LU","SK","SI","EE","LV","LT","CY","MT"] },
+  USD: { name: "US Dollar", symbol: "$", decimals: 2, format: "$1,234.56", countries: ["US"] },
+  GBP: { name: "British Pound", symbol: "\u00a3", decimals: 2, format: "\u00a31,234.56", countries: ["GB"] },
+  CHF: { name: "Swiss Franc", symbol: "CHF", decimals: 2, format: "CHF 1'234.56", countries: ["CH"] },
+  JPY: { name: "Japanese Yen", symbol: "\u00a5", decimals: 0, format: "\u00a51,234", countries: ["JP"] },
+  CAD: { name: "Canadian Dollar", symbol: "CA$", decimals: 2, format: "$1,234.56", countries: ["CA"] },
+  AUD: { name: "Australian Dollar", symbol: "A$", decimals: 2, format: "$1,234.56", countries: ["AU"] },
+  MXN: { name: "Mexican Peso", symbol: "$", decimals: 2, format: "$1,234.56", countries: ["MX"] },
+  BRL: { name: "Brazilian Real", symbol: "R$", decimals: 2, format: "R$ 1.234,56", countries: ["BR"] },
+  SEK: { name: "Swedish Krona", symbol: "kr", decimals: 2, format: "1 234,56 kr", countries: ["SE"] },
+  NOK: { name: "Norwegian Krone", symbol: "kr", decimals: 2, format: "1 234,56 kr", countries: ["NO"] },
+  DKK: { name: "Danish Krone", symbol: "kr", decimals: 2, format: "1.234,56 kr", countries: ["DK"] },
+  PLN: { name: "Polish Zloty", symbol: "z\u0142", decimals: 2, format: "1 234,56 z\u0142", countries: ["PL"] },
+  CZK: { name: "Czech Koruna", symbol: "K\u010d", decimals: 2, format: "1 234,56 K\u010d", countries: ["CZ"] },
+  HUF: { name: "Hungarian Forint", symbol: "Ft", decimals: 0, format: "1 234 Ft", countries: ["HU"] },
+  RON: { name: "Romanian Leu", symbol: "lei", decimals: 2, format: "1.234,56 lei", countries: ["RO"] },
+  BGN: { name: "Bulgarian Lev", symbol: "\u043b\u0432", decimals: 2, format: "1 234,56 \u043b\u0432", countries: ["BG"] },
+  HRK: { name: "Croatian Kuna", symbol: "kn", decimals: 2, format: "1.234,56 kn", countries: ["HR"] },
+  ISK: { name: "Icelandic Kr\u00f3na", symbol: "kr", decimals: 0, format: "1.234 kr", countries: ["IS"] },
+  TRY: { name: "Turkish Lira", symbol: "\u20ba", decimals: 2, format: "\u20ba1.234,56", countries: ["TR"] },
+  ILS: { name: "Israeli Shekel", symbol: "\u20aa", decimals: 2, format: "\u20aa1,234.56", countries: ["IL"] },
+  ZAR: { name: "South African Rand", symbol: "R", decimals: 2, format: "R 1 234,56", countries: ["ZA"] },
+  INR: { name: "Indian Rupee", symbol: "\u20b9", decimals: 2, format: "\u20b91,23,456.78", countries: ["IN"] },
+  CNY: { name: "Chinese Yuan", symbol: "\u00a5", decimals: 2, format: "\u00a51,234.56", countries: ["CN"] },
+  KRW: { name: "South Korean Won", symbol: "\u20a9", decimals: 0, format: "\u20a91,234", countries: ["KR"] },
+  SGD: { name: "Singapore Dollar", symbol: "S$", decimals: 2, format: "S$1,234.56", countries: ["SG"] },
+  HKD: { name: "Hong Kong Dollar", symbol: "HK$", decimals: 2, format: "HK$1,234.56", countries: ["HK"] },
+  NZD: { name: "New Zealand Dollar", symbol: "NZ$", decimals: 2, format: "$1,234.56", countries: ["NZ"] },
+  THB: { name: "Thai Baht", symbol: "\u0e3f", decimals: 2, format: "\u0e3f1,234.56", countries: ["TH"] },
+  TWD: { name: "Taiwan Dollar", symbol: "NT$", decimals: 0, format: "NT$1,234", countries: ["TW"] },
+  ARS: { name: "Argentine Peso", symbol: "$", decimals: 2, format: "$ 1.234,56", countries: ["AR"] },
+  CLP: { name: "Chilean Peso", symbol: "$", decimals: 0, format: "$1.234", countries: ["CL"] },
+  COP: { name: "Colombian Peso", symbol: "$", decimals: 0, format: "$ 1.234", countries: ["CO"] },
+  PEN: { name: "Peruvian Sol", symbol: "S/", decimals: 2, format: "S/ 1,234.56", countries: ["PE"] },
+  UYU: { name: "Uruguayan Peso", symbol: "$U", decimals: 2, format: "$U 1.234,56", countries: ["UY"] },
+  AED: { name: "UAE Dirham", symbol: "\u062f.\u0625", decimals: 2, format: "1,234.56 \u062f.\u0625", countries: ["AE"] },
+  SAR: { name: "Saudi Riyal", symbol: "\ufdfc", decimals: 2, format: "1,234.56 \ufdfc", countries: ["SA"] },
+  PHP: { name: "Philippine Peso", symbol: "\u20b1", decimals: 2, format: "\u20b11,234.56", countries: ["PH"] },
+  MYR: { name: "Malaysian Ringgit", symbol: "RM", decimals: 2, format: "RM1,234.56", countries: ["MY"] },
+  IDR: { name: "Indonesian Rupiah", symbol: "Rp", decimals: 0, format: "Rp1.234", countries: ["ID"] },
+}, null, 2);
+
+const COUNTRIES = JSON.stringify([
+  { name: "Spain (Peninsula)", code: "ES", fiscalZone: "peninsula", defaultTaxRate: 21, taxName: "IVA", currency: "EUR", invoicePrefix: "F" },
+  { name: "Spain (Canary Islands)", code: "ES-CN", fiscalZone: "canarias", defaultTaxRate: 7, taxName: "IGIC", currency: "EUR", invoicePrefix: "F" },
+  { name: "Spain (Ceuta)", code: "ES-CE", fiscalZone: "ceuta", defaultTaxRate: 10, taxName: "IPSI", currency: "EUR", invoicePrefix: "F" },
+  { name: "Spain (Melilla)", code: "ES-ML", fiscalZone: "melilla", defaultTaxRate: 10, taxName: "IPSI", currency: "EUR", invoicePrefix: "F" },
+  { name: "Germany", code: "DE", fiscalZone: "eu", defaultTaxRate: 19, taxName: "USt", currency: "EUR", invoicePrefix: "INV" },
+  { name: "France", code: "FR", fiscalZone: "eu", defaultTaxRate: 20, taxName: "TVA", currency: "EUR", invoicePrefix: "FA" },
+  { name: "Italy", code: "IT", fiscalZone: "eu", defaultTaxRate: 22, taxName: "IVA", currency: "EUR", invoicePrefix: "FT" },
+  { name: "Netherlands", code: "NL", fiscalZone: "eu", defaultTaxRate: 21, taxName: "BTW", currency: "EUR", invoicePrefix: "F" },
+  { name: "Belgium", code: "BE", fiscalZone: "eu", defaultTaxRate: 21, taxName: "TVA/BTW", currency: "EUR", invoicePrefix: "F" },
+  { name: "Portugal", code: "PT", fiscalZone: "eu", defaultTaxRate: 23, taxName: "IVA", currency: "EUR", invoicePrefix: "FT" },
+  { name: "Austria", code: "AT", fiscalZone: "eu", defaultTaxRate: 20, taxName: "USt", currency: "EUR", invoicePrefix: "RE" },
+  { name: "Ireland", code: "IE", fiscalZone: "eu", defaultTaxRate: 23, taxName: "VAT", currency: "EUR", invoicePrefix: "INV" },
+  { name: "Finland", code: "FI", fiscalZone: "eu", defaultTaxRate: 24, taxName: "ALV", currency: "EUR", invoicePrefix: "INV" },
+  { name: "Greece", code: "GR", fiscalZone: "eu", defaultTaxRate: 24, taxName: "FPA", currency: "EUR", invoicePrefix: "TIM" },
+  { name: "Luxembourg", code: "LU", fiscalZone: "eu", defaultTaxRate: 17, taxName: "TVA", currency: "EUR", invoicePrefix: "F" },
+  { name: "Slovakia", code: "SK", fiscalZone: "eu", defaultTaxRate: 20, taxName: "DPH", currency: "EUR", invoicePrefix: "F" },
+  { name: "Slovenia", code: "SI", fiscalZone: "eu", defaultTaxRate: 22, taxName: "DDV", currency: "EUR", invoicePrefix: "F" },
+  { name: "Estonia", code: "EE", fiscalZone: "eu", defaultTaxRate: 22, taxName: "KM", currency: "EUR", invoicePrefix: "INV" },
+  { name: "Latvia", code: "LV", fiscalZone: "eu", defaultTaxRate: 21, taxName: "PVN", currency: "EUR", invoicePrefix: "INV" },
+  { name: "Lithuania", code: "LT", fiscalZone: "eu", defaultTaxRate: 21, taxName: "PVM", currency: "EUR", invoicePrefix: "SF" },
+  { name: "Cyprus", code: "CY", fiscalZone: "eu", defaultTaxRate: 19, taxName: "VAT", currency: "EUR", invoicePrefix: "INV" },
+  { name: "Malta", code: "MT", fiscalZone: "eu", defaultTaxRate: 18, taxName: "VAT", currency: "EUR", invoicePrefix: "INV" },
+  { name: "Sweden", code: "SE", fiscalZone: "eu", defaultTaxRate: 25, taxName: "MOMS", currency: "SEK", invoicePrefix: "F" },
+  { name: "Denmark", code: "DK", fiscalZone: "eu", defaultTaxRate: 25, taxName: "MOMS", currency: "DKK", invoicePrefix: "F" },
+  { name: "Poland", code: "PL", fiscalZone: "eu", defaultTaxRate: 23, taxName: "VAT", currency: "PLN", invoicePrefix: "FV" },
+  { name: "Czech Republic", code: "CZ", fiscalZone: "eu", defaultTaxRate: 21, taxName: "DPH", currency: "CZK", invoicePrefix: "F" },
+  { name: "Hungary", code: "HU", fiscalZone: "eu", defaultTaxRate: 27, taxName: "\u00c1FA", currency: "HUF", invoicePrefix: "SZ" },
+  { name: "Romania", code: "RO", fiscalZone: "eu", defaultTaxRate: 19, taxName: "TVA", currency: "RON", invoicePrefix: "F" },
+  { name: "Bulgaria", code: "BG", fiscalZone: "eu", defaultTaxRate: 20, taxName: "DDS", currency: "BGN", invoicePrefix: "F" },
+  { name: "Croatia", code: "HR", fiscalZone: "eu", defaultTaxRate: 25, taxName: "PDV", currency: "EUR", invoicePrefix: "R" },
+  { name: "United Kingdom", code: "GB", fiscalZone: "international", defaultTaxRate: 20, taxName: "VAT", currency: "GBP", invoicePrefix: "INV" },
+  { name: "United States", code: "US", fiscalZone: "international", defaultTaxRate: 0, taxName: "Sales Tax", currency: "USD", invoicePrefix: "INV" },
+  { name: "Canada", code: "CA", fiscalZone: "international", defaultTaxRate: 5, taxName: "GST", currency: "CAD", invoicePrefix: "INV" },
+  { name: "Mexico", code: "MX", fiscalZone: "international", defaultTaxRate: 16, taxName: "IVA", currency: "MXN", invoicePrefix: "F" },
+  { name: "Brazil", code: "BR", fiscalZone: "international", defaultTaxRate: 17, taxName: "ICMS", currency: "BRL", invoicePrefix: "NF" },
+  { name: "Argentina", code: "AR", fiscalZone: "international", defaultTaxRate: 21, taxName: "IVA", currency: "ARS", invoicePrefix: "F" },
+  { name: "Chile", code: "CL", fiscalZone: "international", defaultTaxRate: 19, taxName: "IVA", currency: "CLP", invoicePrefix: "F" },
+  { name: "Colombia", code: "CO", fiscalZone: "international", defaultTaxRate: 19, taxName: "IVA", currency: "COP", invoicePrefix: "F" },
+  { name: "Peru", code: "PE", fiscalZone: "international", defaultTaxRate: 18, taxName: "IGV", currency: "PEN", invoicePrefix: "F" },
+  { name: "Uruguay", code: "UY", fiscalZone: "international", defaultTaxRate: 22, taxName: "IVA", currency: "UYU", invoicePrefix: "F" },
+  { name: "Australia", code: "AU", fiscalZone: "international", defaultTaxRate: 10, taxName: "GST", currency: "AUD", invoicePrefix: "INV" },
+  { name: "New Zealand", code: "NZ", fiscalZone: "international", defaultTaxRate: 15, taxName: "GST", currency: "NZD", invoicePrefix: "INV" },
+  { name: "Japan", code: "JP", fiscalZone: "international", defaultTaxRate: 10, taxName: "JCT", currency: "JPY", invoicePrefix: "INV" },
+  { name: "South Korea", code: "KR", fiscalZone: "international", defaultTaxRate: 10, taxName: "VAT", currency: "KRW", invoicePrefix: "INV" },
+  { name: "Singapore", code: "SG", fiscalZone: "international", defaultTaxRate: 9, taxName: "GST", currency: "SGD", invoicePrefix: "INV" },
+  { name: "Hong Kong", code: "HK", fiscalZone: "international", defaultTaxRate: 0, taxName: "N/A", currency: "HKD", invoicePrefix: "INV" },
+  { name: "India", code: "IN", fiscalZone: "international", defaultTaxRate: 18, taxName: "GST", currency: "INR", invoicePrefix: "INV" },
+  { name: "China", code: "CN", fiscalZone: "international", defaultTaxRate: 13, taxName: "VAT", currency: "CNY", invoicePrefix: "INV" },
+  { name: "Taiwan", code: "TW", fiscalZone: "international", defaultTaxRate: 5, taxName: "VAT", currency: "TWD", invoicePrefix: "INV" },
+  { name: "Thailand", code: "TH", fiscalZone: "international", defaultTaxRate: 7, taxName: "VAT", currency: "THB", invoicePrefix: "INV" },
+  { name: "Philippines", code: "PH", fiscalZone: "international", defaultTaxRate: 12, taxName: "VAT", currency: "PHP", invoicePrefix: "INV" },
+  { name: "Malaysia", code: "MY", fiscalZone: "international", defaultTaxRate: 8, taxName: "SST", currency: "MYR", invoicePrefix: "INV" },
+  { name: "Indonesia", code: "ID", fiscalZone: "international", defaultTaxRate: 11, taxName: "PPN", currency: "IDR", invoicePrefix: "INV" },
+  { name: "Israel", code: "IL", fiscalZone: "international", defaultTaxRate: 17, taxName: "VAT", currency: "ILS", invoicePrefix: "INV" },
+  { name: "South Africa", code: "ZA", fiscalZone: "international", defaultTaxRate: 15, taxName: "VAT", currency: "ZAR", invoicePrefix: "INV" },
+  { name: "United Arab Emirates", code: "AE", fiscalZone: "international", defaultTaxRate: 5, taxName: "VAT", currency: "AED", invoicePrefix: "INV" },
+  { name: "Saudi Arabia", code: "SA", fiscalZone: "international", defaultTaxRate: 15, taxName: "VAT", currency: "SAR", invoicePrefix: "INV" },
+  { name: "Switzerland", code: "CH", fiscalZone: "international", defaultTaxRate: 8.1, taxName: "MWST", currency: "CHF", invoicePrefix: "RE" },
+  { name: "Norway", code: "NO", fiscalZone: "international", defaultTaxRate: 25, taxName: "MVA", currency: "NOK", invoicePrefix: "F" },
+  { name: "Iceland", code: "IS", fiscalZone: "international", defaultTaxRate: 24, taxName: "VSK", currency: "ISK", invoicePrefix: "INV" },
+  { name: "Turkey", code: "TR", fiscalZone: "international", defaultTaxRate: 20, taxName: "KDV", currency: "TRY", invoicePrefix: "F" },
+], null, 2);
+
 /* ------------------------------------------------------------------ */
 /*  Registration                                                       */
 /* ------------------------------------------------------------------ */
@@ -387,6 +495,48 @@ export function registerAllResources(server: McpServer, client?: IFrihetClient):
     }),
   );
 
+  server.registerResource(
+    "currencies",
+    "frihet://config/currencies",
+    {
+      description:
+        "40 supported currencies with ISO codes, symbols, decimal places, locale formatting examples, and associated countries. " +
+        "Use to validate currency inputs and format monetary values. " +
+        "/ 40 divisas soportadas con códigos ISO, símbolos, decimales, formato local y países asociados.",
+      mimeType: "application/json",
+    },
+    async () => ({
+      contents: [
+        {
+          uri: "frihet://config/currencies",
+          mimeType: "application/json",
+          text: CURRENCIES,
+        },
+      ],
+    }),
+  );
+
+  server.registerResource(
+    "countries",
+    "frihet://config/countries",
+    {
+      description:
+        "61 supported countries with ISO codes, fiscal zones (peninsula, canarias, ceuta, melilla, eu, international), " +
+        "default tax rates, tax names, default currencies, and invoice prefixes. " +
+        "/ 61 países soportados con zonas fiscales, tipos impositivos, divisas y prefijos de factura.",
+      mimeType: "application/json",
+    },
+    async () => ({
+      contents: [
+        {
+          uri: "frihet://config/countries",
+          mimeType: "application/json",
+          text: COUNTRIES,
+        },
+      ],
+    }),
+  );
+
   /* ---------------------------------------------------------------- */
   /*  Dynamic resources (require API client)                           */
   /* ---------------------------------------------------------------- */
@@ -458,6 +608,34 @@ export function registerAllResources(server: McpServer, client?: IFrihetClient):
               uri: "frihet://overdue-invoices",
               mimeType: "application/json",
               text: JSON.stringify(data, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerResource(
+      "plan-limits",
+      "frihet://status/plan-limits",
+      {
+        description:
+          "Live plan limits and current usage — plan tier, invoices/month, AI messages/day, team members, " +
+          "integrations, API requests/minute, and real-time usage counters. " +
+          "/ Límites del plan y uso actual en vivo — tier, facturas/mes, mensajes IA/día, miembros, integraciones, API req/min.",
+        mimeType: "application/json",
+      },
+      async () => {
+        const ctx = await client.getBusinessContext();
+        const plan = (ctx as Record<string, unknown>).plan ?? "free";
+        const limits = (ctx as Record<string, unknown>).limits ?? {};
+        const usage = (ctx as Record<string, unknown>).usage ?? {};
+        const result = { plan, limits, usage };
+        return {
+          contents: [
+            {
+              uri: "frihet://status/plan-limits",
+              mimeType: "application/json",
+              text: JSON.stringify(result, null, 2),
             },
           ],
         };
