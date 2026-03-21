@@ -1,5 +1,5 @@
 /**
- * Barrel module that registers all 35 Frihet ERP tools on an McpServer.
+ * Barrel module that registers all 44 Frihet ERP tools on an McpServer.
  *
  * Used by both the local (stdio) and remote (Cloudflare Workers) servers
  * so tool definitions stay in sync — one source of truth.
@@ -12,6 +12,7 @@ import { registerExpenseTools } from "./expenses.js";
 import { registerClientTools } from "./clients.js";
 import { registerProductTools } from "./products.js";
 import { registerQuoteTools } from "./quotes.js";
+import { registerVendorTools } from "./vendors.js";
 import { registerWebhookTools } from "./webhooks.js";
 import { registerIntelligenceTools } from "./intelligence.js";
 
@@ -22,5 +23,6 @@ export function registerAllTools(server: McpServer, client: IFrihetClient): void
   registerClientTools(server, client);
   registerProductTools(server, client);
   registerQuoteTools(server, client);
+  registerVendorTools(server, client);
   registerWebhookTools(server, client);
 }
