@@ -24,7 +24,7 @@ const app = new Hono<{ Bindings: AuthEnv }>();
 app.get("/", (c) => {
   return c.json({
     name: "Frihet MCP Server",
-    version: "1.2.3",
+    version: "1.4.0",
     description:
       "AI-native business management — invoices, expenses, clients, products, quotes",
     docs: "https://docs.frihet.io/desarrolladores/mcp-server",
@@ -36,9 +36,9 @@ app.get("/", (c) => {
       authorization_server:
         "https://mcp.frihet.io/.well-known/oauth-authorization-server",
     },
-    tools: 31,
-    resources: 5,
-    prompts: 5,
+    tools: 35,
+    resources: 8,
+    prompts: 7,
   });
 });
 

@@ -32,37 +32,37 @@ Endpoints:
   GET    /invoices          — List invoices (paginated)
   GET    /invoices/:id      — Get invoice by ID
   POST   /invoices          — Create invoice
-  PUT    /invoices/:id      — Update invoice
+  PATCH  /invoices/:id      — Update invoice
   DELETE /invoices/:id      — Delete invoice
 
   GET    /expenses          — List expenses (paginated)
   GET    /expenses/:id      — Get expense by ID
   POST   /expenses          — Create expense
-  PUT    /expenses/:id      — Update expense
+  PATCH  /expenses/:id      — Update expense
   DELETE /expenses/:id      — Delete expense
 
   GET    /clients           — List clients (paginated)
   GET    /clients/:id       — Get client by ID
   POST   /clients          — Create client
-  PUT    /clients/:id       — Update client
+  PATCH  /clients/:id       — Update client
   DELETE /clients/:id       — Delete client
 
   GET    /products          — List products (paginated)
   GET    /products/:id      — Get product by ID
   POST   /products          — Create product
-  PUT    /products/:id      — Update product
+  PATCH  /products/:id      — Update product
   DELETE /products/:id      — Delete product
 
   GET    /quotes            — List quotes (paginated)
   GET    /quotes/:id        — Get quote by ID
   POST   /quotes            — Create quote
-  PUT    /quotes/:id        — Update quote
+  PATCH  /quotes/:id        — Update quote
   DELETE /quotes/:id        — Delete quote
 
   GET    /webhooks          — List webhooks (paginated)
   GET    /webhooks/:id      — Get webhook by ID
   POST   /webhooks          — Create webhook
-  PUT    /webhooks/:id      — Update webhook
+  PATCH  /webhooks/:id      — Update webhook
   DELETE /webhooks/:id      — Delete webhook
 
 Pagination:

@@ -229,7 +229,7 @@ export function enrichResponse(
 
   // After creating an invoice
   if (operation === "create" && resource === "invoices") {
-    suggestions.push("send_invoice — Send this invoice to the client by email");
+    suggestions.push("update_invoice — Update this invoice (e.g. change status to 'sent')");
     suggestions.push("get_invoice — View the full invoice with calculated totals");
     const rec = data as Record<string, unknown> | undefined;
     if (rec?.status === "draft") {

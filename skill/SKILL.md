@@ -13,7 +13,7 @@ description: >-
 license: MIT
 metadata:
   author: BRTHLS
-  version: 1.2.0
+  version: 1.4.0
   mcp-server: frihet-mcp
   category: business-management
   tags: [erp, invoicing, expenses, tax-compliance, ai-business, spain, mcp]
@@ -66,10 +66,11 @@ Run `/frihet status` — if you see your account info, you're ready.
 | `/frihet webhooks` | Configure automation triggers | `/frihet webhooks` |
 | `/frihet setup` | Guided connection setup | `/frihet setup` |
 
-## MCP Tools (31 total)
+## MCP Tools (35 total)
 
 | Resource | Tools | Operations |
 |----------|-------|------------|
+| Intelligence | 4 | get_business_context, get_monthly_summary, get_quarterly_taxes, duplicate_invoice |
 | Invoices | 6 | list, get, create, update, delete, search |
 | Expenses | 5 | list, get, create, update, delete |
 | Clients | 5 | list, get, create, update, delete |

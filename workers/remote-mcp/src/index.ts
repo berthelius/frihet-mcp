@@ -40,7 +40,7 @@ export type AuthProps = {
 export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
   server = new McpServer({
     name: "Frihet",
-    version: "1.2.3",
+    version: "1.4.0",
   });
 
   async init(): Promise<void> {
@@ -200,7 +200,7 @@ export default {
         JSON.stringify({
           status: overallStatus,
           checks,
-          version: "1.2.4",
+          version: "1.4.0",
           timestamp: new Date().toISOString(),
         }),
         {

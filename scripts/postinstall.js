@@ -4,7 +4,7 @@ if (process.env.CI || process.env.FRIHET_QUIET) process.exit(0);
 
 console.log(`
   ╔══════════════════════════════════════════════════════╗
-  ║  @frihet/mcp-server v1.3.1 installed                ║
+  ║  @frihet/mcp-server v1.4.0 installed                ║
   ║                                                      ║
   ║  Docs:   https://docs.frihet.io/mcp                  ║
   ║  GitHub: https://github.com/Frihet-io/frihet-mcp     ║
