@@ -15,7 +15,6 @@
   <a href="https://www.npmjs.com/package/@frihet/mcp-server"><img src="https://img.shields.io/npm/v/@frihet/mcp-server?style=flat&color=18181b&labelColor=09090b" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/@frihet/mcp-server"><img src="https://img.shields.io/npm/dm/@frihet/mcp-server?style=flat&color=18181b&labelColor=09090b&label=downloads" alt="npm downloads"></a>
   <a href="https://smithery.ai/server/frihet/frihet-mcp"><img src="https://smithery.ai/badge/frihet/frihet-mcp" alt="Smithery installs"></a>
-  <a href="https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet"><img src="https://img.shields.io/badge/MCP-Registry-18181b?style=flat&labelColor=09090b" alt="MCP Registry"></a>
   <a href="https://github.com/Frihet-io/frihet-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-18181b?style=flat&labelColor=09090b" alt="license"></a>
   <img src="https://img.shields.io/badge/tools-52-18181b?style=flat&labelColor=09090b" alt="52 tools">
   <img src="https://img.shields.io/badge/node-%3E%3D18-18181b?style=flat&labelColor=09090b" alt="node >=18">
@@ -188,7 +187,7 @@ If you need to digitize paper invoices or receipts, extract the data first (e.g.
 
 ---
 
-## Tools (43)
+## Tools (52)
 
 ### Invoices (6)
 
@@ -475,7 +474,6 @@ npm run build   # must pass before submitting
 - [API reference](https://docs.frihet.io/desarrolladores/api-rest) -- REST API
 - [MCP server docs](https://docs.frihet.io/desarrolladores/mcp-server) -- Setup guides, troubleshooting
 - [npm](https://www.npmjs.com/package/@frihet/mcp-server) -- Package registry
-- [MCP Registry](https://registry.modelcontextprotocol.io/servers/io.github.berthelius/frihet) -- Official MCP Registry
 - [Smithery](https://smithery.ai/server/frihet/frihet-mcp) -- Smithery marketplace
 - [Remote endpoint](https://mcp.frihet.io) -- Hosted MCP server (Cloudflare Workers)
 - [OpenAPI spec](https://api.frihet.io/openapi.yaml) -- Machine-readable API definition
