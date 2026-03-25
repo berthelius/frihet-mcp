@@ -67,7 +67,7 @@ function main(): void {
 
   const server = new McpServer({
     name: "frihet-erp",
-    version: "1.4.0",
+    version: "1.5.2",
     description:
       "AI-native MCP server for Frihet ERP — invoices, expenses, clients, products, quotes, and webhooks. " +
       "Provides 52 tools (including business context, monthly summaries, quarterly taxes, invoice duplication, and CRM subcollections), " +
@@ -90,12 +90,12 @@ function main(): void {
   // Connect via stdio transport
   const transport = new StdioServerTransport();
   server.connect(transport).then(() => {
-    console.error("[frihet-mcp] v1.4.0 | 52 tools | https://github.com/Frihet-io/frihet-mcp");
+    console.error("[frihet-mcp] v1.5.2 | 52 tools | https://github.com/Frihet-io/frihet-mcp");
     log({
       level: "info",
       message: "Frihet MCP server running on stdio",
       operation: "startup",
-      metadata: { version: "1.4.0", transport: "stdio" },
+      metadata: { version: "1.5.2", transport: "stdio" },
     });
   }).catch((error: unknown) => {
     log({

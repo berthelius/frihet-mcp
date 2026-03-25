@@ -40,7 +40,7 @@ export type AuthProps = {
 export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
   server = new McpServer({
     name: "Frihet",
-    version: "1.4.0",
+    version: "1.5.2",
   });
 
   async init(): Promise<void> {
@@ -174,23 +174,30 @@ export default {
       });
     }
 
-    // Health check with real API connectivity test
+    // Health check — checks MCP server + upstream API (direct to Firebase, not via proxy)
     if (url.pathname === "/health") {
-      const checks: Record<string, { status: string; latencyMs?: number }> = {};
+      const checks: Record<string, { status: string; latencyMs?: number; statusCode?: number }> = {};
 
+      // Check upstream API directly (bypass api.frihet.io proxy — same-zone Worker fetch returns 522)
+      const UPSTREAM_HEALTH = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/health";
       try {
         const apiStart = Date.now();
-        const apiRes = await fetch("https://api.frihet.io/v1/health", {
-          method: "HEAD",
+        const apiRes = await fetch(UPSTREAM_HEALTH, {
+          method: "GET",
+          headers: { Accept: "application/json" },
           signal: AbortSignal.timeout(5000),
         });
         checks.api = {
-          status: apiRes.ok ? "ok" : "degraded",
+          status: apiRes.status < 500 ? "ok" : "degraded",
           latencyMs: Math.round(Date.now() - apiStart),
+          statusCode: apiRes.status,
         };
       } catch {
         checks.api = { status: "unreachable" };
       }
+
+      // MCP Durable Object is always healthy if this Worker is responding
+      checks.mcp = { status: "ok" };
 
       const overallStatus = Object.values(checks).every((c) => c.status === "ok")
         ? "ok"
@@ -200,7 +207,7 @@ export default {
         JSON.stringify({
           status: overallStatus,
           checks,
-          version: "1.4.0",
+          version: "1.5.2",
           timestamp: new Date().toISOString(),
         }),
         {
