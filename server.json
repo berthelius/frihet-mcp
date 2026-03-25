@@ -2,12 +2,12 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.frihet/erp",
   "title": "Frihet ERP",
-  "description": "AI-native ERP with 52 MCP tools — invoicing, expenses, clients, products, quotes, accounting, tax compliance, fiscal autopilot, e-invoicing, and open banking",
+  "description": "AI-native ERP: invoices, expenses, CRM, accounting, tax compliance & open banking. 52 tools.",
   "repository": {
     "url": "https://github.com/Frihet-io/frihet-mcp",
     "source": "github"
   },
-  "version": "1.5.1",
+  "version": "1.5.2",
   "packages": [
     {
       "registryType": "npm",
