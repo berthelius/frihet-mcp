@@ -1,26 +1,27 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.berthelius/frihet",
-  "description": "AI-native business management. Invoices, expenses, clients, products, quotes, CRM. 52 tools.",
+  "name": "io.frihet/erp",
+  "title": "Frihet ERP",
+  "description": "AI-native ERP with 52 MCP tools — invoicing, expenses, clients, products, quotes, accounting, tax compliance, fiscal autopilot, e-invoicing, and open banking",
   "repository": {
     "url": "https://github.com/Frihet-io/frihet-mcp",
     "source": "github"
   },
-  "version": "1.4.0",
-  "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://mcp.frihet.io/mcp"
-    }
-  ],
+  "version": "1.5.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@frihet/mcp-server",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "transport": {
         "type": "stdio"
       }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.frihet.io/mcp"
     }
   ]
 }

@@ -4,3 +4,6 @@ dist/
 .env
 .DS_Store
 .mcpregistry_*
+mcp-registry-key.pem
+mcp-registry-auth
+mcp-registry-private-key.txt
