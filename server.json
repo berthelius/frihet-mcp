@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.frihet/erp",
   "title": "Frihet ERP",
-  "description": "AI-native business management: invoices, expenses, CRM, accounting, tax compliance, open banking & business intelligence. 52 tools, 11 resources, 10 prompts. OAuth 2.0 + API key auth.",
+  "description": "AI-native business management — 52 tools for invoicing, CRM, accounting & tax.",
   "repository": {
     "url": "https://github.com/Frihet-io/frihet-mcp",
     "source": "github"
