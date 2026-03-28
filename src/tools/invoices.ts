@@ -355,6 +355,38 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
     }),
   );
 
+  // -- get_invoice_einvoice --
+
+  server.registerTool(
+    "get_invoice_einvoice",
+    {
+      title: "Get Invoice E-Invoice XML",
+      description:
+        "Download the e-invoice XML for an invoice. Returns EN16931-compliant XML in the auto-detected format " +
+        "(UBL, CII, XRechnung, Factur-X, FatturaPA, PEPPOL). " +
+        "Only available after the invoice has been saved/sent. " +
+        "/ Descarga el XML de factura electronica para una factura. Devuelve XML conforme a EN16931 en el formato " +
+        "auto-detectado (UBL, CII, XRechnung, Factur-X, FatturaPA, PEPPOL). " +
+        "Solo disponible despues de guardar o enviar la factura.",
+      annotations: READ_ONLY_ANNOTATIONS,
+      inputSchema: {
+        id: z.string().describe("Invoice ID / ID de la factura"),
+      },
+      outputSchema: z.object({
+        xml: z.string().optional(),
+        filename: z.string().optional(),
+        format: z.string().optional(),
+      }).passthrough(),
+    },
+    async ({ id }) => withToolLogging("get_invoice_einvoice", async () => {
+      const result = await client.getInvoiceEInvoice(id);
+      return {
+        content: [{ type: "text" as const, text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+        structuredContent: (typeof result === "object" && result !== null ? result : { xml: result }) as Record<string, unknown>,
+      };
+    }),
+  );
+
   // -- create_credit_note --
 
   server.registerTool(

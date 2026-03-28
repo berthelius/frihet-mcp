@@ -431,6 +431,10 @@ export class FrihetClient {
     return this.request("GET", `/invoices/${encodeURIComponent(id)}/pdf`);
   }
 
+  async getInvoiceEInvoice(invoiceId: string): Promise<any> {
+    return this.request("GET", `/invoices/${encodeURIComponent(invoiceId)}/xml`);
+  }
+
   async createCreditNote(
     invoiceId: string,
     data: { reason: string; reasonDescription?: string; fullCredit?: boolean; issueDate?: string },
