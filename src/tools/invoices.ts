@@ -354,4 +354,62 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       };
     }),
   );
+
+  // -- create_credit_note --
+
+  server.registerTool(
+    "create_credit_note",
+    {
+      title: "Create Credit Note",
+      description:
+        "Create a credit note (factura rectificativa) for an existing invoice. " +
+        "This reverses all or part of an invoice for compliance. " +
+        "Spanish market: generates VeriFactu-compliant R1-R5 rectificativa. " +
+        "Other markets: standard credit note with negative amounts. " +
+        "/ Crea una factura rectificativa para una factura existente. " +
+        "Mercado espanol: genera rectificativa R1-R5 conforme a VeriFactu. " +
+        "Otros mercados: nota de credito estandar con importes negativos.",
+      annotations: CREATE_ANNOTATIONS,
+      inputSchema: {
+        invoiceId: z
+          .string()
+          .describe("ID of the original invoice to credit / ID de la factura original a rectificar"),
+        reason: z
+          .enum(["refund", "discount", "error", "cancellation", "other"])
+          .describe(
+            "Reason for the credit note. Maps to Spanish R-types: error→R1 (art. 80.1), refund/discount/cancellation/other→R4 " +
+            "/ Motivo de la rectificacion. error→R1, resto→R4",
+          ),
+        reasonDescription: z
+          .string()
+          .optional()
+          .describe("Optional free-text description of the reason / Descripcion libre del motivo"),
+        fullCredit: z
+          .boolean()
+          .optional()
+          .describe(
+            "true = full credit (tipo S, sustitucion), false = partial (tipo I, diferencias). Default: true " +
+            "/ true = abono total (tipo S), false = parcial (tipo I). Por defecto: true",
+          ),
+        issueDate: z
+          .string()
+          .optional()
+          .describe("ISO date for the credit note (YYYY-MM-DD). Defaults to today. / Fecha de emision (YYYY-MM-DD). Por defecto hoy."),
+      },
+      outputSchema: invoiceItemOutput,
+    },
+    async ({ invoiceId, reason, reasonDescription, fullCredit, issueDate }) => withToolLogging("create_credit_note", async () => {
+      const result = await client.createCreditNote(invoiceId, {
+        reason,
+        reasonDescription,
+        fullCredit: fullCredit ?? true,
+        issueDate,
+      });
+      const hints = enrichResponse("invoices", "create", result);
+      return {
+        content: [mutateContent(formatRecord("Credit note created", result))],
+        structuredContent: { ...result, ...hints } as unknown as Record<string, unknown>,
+      };
+    }),
+  );
 }

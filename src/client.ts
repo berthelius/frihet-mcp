@@ -431,6 +431,13 @@ export class FrihetClient {
     return this.request("GET", `/invoices/${encodeURIComponent(id)}/pdf`);
   }
 
+  async createCreditNote(
+    invoiceId: string,
+    data: { reason: string; reasonDescription?: string; fullCredit?: boolean; issueDate?: string },
+  ): Promise<Record<string, unknown>> {
+    return this.request("POST", `/invoices/${encodeURIComponent(invoiceId)}/credit-note`, data);
+  }
+
   // ---------------------------------------------------------------- Quote Actions
   // ----------------------------------------------------------------
 

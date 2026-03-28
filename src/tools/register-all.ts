@@ -1,5 +1,5 @@
 /**
- * Barrel module that registers all 52 Frihet ERP tools on an McpServer.
+ * Barrel module that registers all 53 Frihet ERP tools on an McpServer.
  *
  * Used by both the local (stdio) and remote (Cloudflare Workers) servers
  * so tool definitions stay in sync — one source of truth.
