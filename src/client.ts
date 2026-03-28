@@ -442,6 +442,10 @@ export class FrihetClient {
     return this.request("POST", `/invoices/${encodeURIComponent(invoiceId)}/credit-note`, data);
   }
 
+  async applyLateFee(invoiceId: string, data?: { amount?: number; daysOverdue?: number }): Promise<any> {
+    return this.request("POST", `/invoices/${encodeURIComponent(invoiceId)}/late-fee`, data ?? {});
+  }
+
   // ---------------------------------------------------------------- Quote Actions
   // ----------------------------------------------------------------
 

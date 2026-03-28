@@ -444,4 +444,42 @@ export function registerInvoiceTools(server: McpServer, client: IFrihetClient): 
       };
     }),
   );
+
+  // -- apply_late_fee --
+
+  server.registerTool(
+    "apply_late_fee",
+    {
+      title: "Apply Late Fee",
+      description:
+        "Apply late payment interest to an overdue invoice. Calculates interest based on EU Late Payment Directive (8% default) " +
+        "or auto-calculates from days overdue. Creates a debit note linked to the original invoice. " +
+        "/ Aplica intereses de demora a una factura vencida. Calcula intereses segun la Directiva Europea de Morosidad (8% por defecto) " +
+        "o los calcula automaticamente a partir de los dias de retraso. Crea una nota de debito vinculada a la factura original.",
+      annotations: CREATE_ANNOTATIONS,
+      inputSchema: {
+        invoiceId: z.string().describe("ID of the overdue invoice / ID de la factura vencida"),
+        amount: z
+          .number()
+          .optional()
+          .describe("Override fee amount. If omitted, auto-calculated from days overdue and legal rate. / Importe de la comision. Si se omite, se calcula automaticamente."),
+        daysOverdue: z
+          .number()
+          .int()
+          .optional()
+          .describe("Override days overdue count. If omitted, calculated from due date. / Dias de retraso. Si se omite, se calcula a partir de la fecha de vencimiento."),
+      },
+      outputSchema: actionResultOutput,
+    },
+    async ({ invoiceId, amount, daysOverdue }) => withToolLogging("apply_late_fee", async () => {
+      const data: { amount?: number; daysOverdue?: number } = {};
+      if (amount !== undefined) data.amount = amount;
+      if (daysOverdue !== undefined) data.daysOverdue = daysOverdue;
+      const result = await client.applyLateFee(invoiceId, data);
+      return {
+        content: [mutateContent(formatRecord("Late fee applied", result))],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }),
+  );
 }
