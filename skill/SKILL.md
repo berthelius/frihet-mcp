@@ -13,7 +13,7 @@ description: >-
 license: MIT
 metadata:
   author: BRTHLS
-  version: 1.5.2
+  version: 1.5.4
   mcp-server: frihet-mcp
   category: business-management
   tags: [erp, invoicing, expenses, tax-compliance, ai-business, spain, mcp]
@@ -66,7 +66,7 @@ Run `/frihet status` — if you see your account info, you're ready.
 | `/frihet webhooks` | Configure automation triggers | `/frihet webhooks` |
 | `/frihet setup` | Guided connection setup | `/frihet setup` |
 
-## MCP Tools (35 total)
+## MCP Tools (55 total)
 
 | Resource | Tools | Operations |
 |----------|-------|------------|

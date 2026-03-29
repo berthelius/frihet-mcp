@@ -8,62 +8,62 @@ Technical reference for working with the Frihet MCP server tools. Covers rate li
 
 | Tool | Parameters | Notes |
 |------|-----------|-------|
-| `list_invoices` | `page`, `limit`, `status`, `clientId`, `dateFrom`, `dateTo` | Default limit 20. Paginated. |
-| `get_invoice` | `invoiceId` (required) | Returns full invoice with line items |
+| `list_invoices` | `offset`, `limit`, `status`, `clientId`, `dateFrom`, `dateTo` | Default limit 20. Paginated. |
+| `get_invoice` | `id` (required) | Returns full invoice with line items |
 | `create_invoice` | `clientId`, `items[]`, `notes`, `dueDate`, `series` | Items: `{productId?, description, quantity, price, taxRate}` |
-| `update_invoice` | `invoiceId` (required), partial fields | Cannot update if status is `paid` or `cancelled` |
-| `delete_invoice` | `invoiceId` (required) | Only `draft` invoices can be deleted. Others must be cancelled. |
-| `search_invoices` | `query`, `page`, `limit` | Searches across number, client name, notes |
+| `update_invoice` | `id` (required), partial fields | Cannot update if status is `paid` or `cancelled` |
+| `delete_invoice` | `id` (required) | Only `draft` invoices can be deleted. Others must be cancelled. |
+| `search_invoices` | `query`, `offset`, `limit` | Searches across number, client name, notes |
 
 ### Expenses (5 tools)
 
 | Tool | Parameters | Notes |
 |------|-----------|-------|
-| `list_expenses` | `page`, `limit`, `category`, `dateFrom`, `dateTo` | Default limit 20 |
-| `get_expense` | `expenseId` (required) | |
+| `list_expenses` | `offset`, `limit`, `category`, `dateFrom`, `dateTo` | Default limit 20 |
+| `get_expense` | `id` (required) | |
 | `create_expense` | `description`, `amount`, `date`, `category`, `taxAmount`, `supplier` | Category: one of 8 values |
-| `update_expense` | `expenseId` (required), partial fields | |
-| `delete_expense` | `expenseId` (required) | |
+| `update_expense` | `id` (required), partial fields | |
+| `delete_expense` | `id` (required) | |
 
 ### Clients (5 tools)
 
 | Tool | Parameters | Notes |
 |------|-----------|-------|
-| `list_clients` | `page`, `limit`, `search` | |
-| `get_client` | `clientId` (required) | Returns full client with address, fiscal zone |
+| `list_clients` | `offset`, `limit`, `search` | |
+| `get_client` | `id` (required) | Returns full client with address, fiscal zone |
 | `create_client` | `name`, `taxId`, `email`, `phone`, `address`, `fiscalZone` | fiscalZone: peninsula/canarias/ceuta_melilla/eu/world |
-| `update_client` | `clientId` (required), partial fields | |
-| `delete_client` | `clientId` (required) | Cannot delete if has invoices. Archive instead. |
+| `update_client` | `id` (required), partial fields | |
+| `delete_client` | `id` (required) | Cannot delete if has invoices. Archive instead. |
 
 ### Products (5 tools)
 
 | Tool | Parameters | Notes |
 |------|-----------|-------|
-| `list_products` | `page`, `limit`, `search` | |
-| `get_product` | `productId` (required) | |
+| `list_products` | `offset`, `limit`, `search` | |
+| `get_product` | `id` (required) | |
 | `create_product` | `name`, `price`, `taxRate`, `description`, `unit` | unit: "unit", "hour", "kg", etc. |
-| `update_product` | `productId` (required), partial fields | |
-| `delete_product` | `productId` (required) | Cannot delete if used in invoices |
+| `update_product` | `id` (required), partial fields | |
+| `delete_product` | `id` (required) | Cannot delete if used in invoices |
 
 ### Quotes (5 tools)
 
 | Tool | Parameters | Notes |
 |------|-----------|-------|
-| `list_quotes` | `page`, `limit`, `status`, `clientId` | |
-| `get_quote` | `quoteId` (required) | |
+| `list_quotes` | `offset`, `limit`, `status`, `clientId` | |
+| `get_quote` | `id` (required) | |
 | `create_quote` | `clientId`, `items[]`, `notes`, `validUntil` | Same items format as invoices |
-| `update_quote` | `quoteId` (required), partial fields | |
-| `delete_quote` | `quoteId` (required) | Only draft quotes |
+| `update_quote` | `id` (required), partial fields | |
+| `delete_quote` | `id` (required) | Only draft quotes |
 
 ### Webhooks (5 tools)
 
 | Tool | Parameters | Notes |
 |------|-----------|-------|
-| `list_webhooks` | `page`, `limit` | |
-| `get_webhook` | `webhookId` (required) | |
+| `list_webhooks` | `offset`, `limit` | |
+| `get_webhook` | `id` (required) | |
 | `create_webhook` | `url`, `events[]` | Events: invoice.created, invoice.paid, expense.created, etc. |
-| `update_webhook` | `webhookId` (required), partial fields | |
-| `delete_webhook` | `webhookId` (required) | |
+| `update_webhook` | `id` (required), partial fields | |
+| `delete_webhook` | `id` (required) | |
 
 ## Pagination
 
@@ -73,18 +73,17 @@ All list endpoints return paginated results:
 {
   "data": [...],
   "pagination": {
-    "page": 1,
+    "offset": 0,
     "limit": 20,
-    "total": 142,
-    "totalPages": 8
+    "total": 142
   }
 }
 ```
 
 **Best practices:**
 - Default `limit` is 20. Max is 100.
-- For "list all" requests, paginate with a loop: increment `page` until `page >= totalPages`.
-- For "last N" requests, use `limit: N` with `page: 1` (results are sorted newest first by default).
+- For "list all" requests, paginate with a loop: increment `offset` by `limit` until `offset >= total`.
+- For "last N" requests, use `limit: N` with `offset: 0` (results are sorted newest first by default).
 - When calculating totals across all records (e.g., monthly close), fetch ALL pages.
 
 ## Rate Limits
