@@ -488,3 +488,8 @@ npm run build   # must pass before submitting
 MIT. See [LICENSE](./LICENSE).
 
 Built by [Frihet](https://frihet.io).
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/frihet-mcp-server).
+
