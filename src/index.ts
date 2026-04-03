@@ -17,6 +17,7 @@ import { FrihetClient } from "./client.js";
 import { registerAllTools } from "./tools/register-all.js";
 import { registerAllResources } from "./resources/register-all.js";
 import { registerAllPrompts } from "./prompts/register-all.js";
+import { applyOpenAIProfile, OPENAI_EXCLUDED_COUNT, OPENAI_EXCLUDED_RESOURCE_COUNT } from "./openai-profile.js";
 import { log } from "./logger.js";
 import { registerShutdownHook } from "./metrics.js";
 
@@ -75,7 +76,18 @@ function main(): void {
       "with full Spanish tax compliance (IVA, IGIC, IPSI).",
   });
 
-  // Register all 52 tools (36 CRUD + 8 CRM + 4 intelligence + 4 actions)
+  // Apply OpenAI-safe profile if enabled (strips sensitive fields, fixes annotations)
+  const openaiMode = process.env.FRIHET_OPENAI_MODE === "true";
+  if (openaiMode) {
+    applyOpenAIProfile(server);
+    log({
+      level: "info",
+      message: `OpenAI safety profile active — ${OPENAI_EXCLUDED_COUNT} tools + ${OPENAI_EXCLUDED_RESOURCE_COUNT} resources excluded, gov IDs + credentials redacted`,
+      operation: "startup",
+    });
+  }
+
+  // Register tools (55 full / 53 in OpenAI mode)
   registerAllTools(server, client);
 
   // Register 11 resources (8 static + 3 dynamic via API)

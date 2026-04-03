@@ -23,3 +23,12 @@ id = "9207b98598f849109139ad11f3b0ac51"
 
 [dev]
 port = 8788
+
+# OpenAI-safe deployment: wrangler deploy --env openai
+# Serves at openai-mcp.frihet.io with restricted tool set (53/55 tools)
+# Gov IDs stripped, openWorldHint corrected, credentials redacted
+[env.openai]
+name = "frihet-openai-mcp"
+routes = [{ pattern = "openai-mcp.frihet.io/*", zone_name = "frihet.io" }]
+[env.openai.vars]
+FRIHET_OPENAI_MODE = "true"

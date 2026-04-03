@@ -17,6 +17,7 @@ import { McpAgent } from "agents/mcp";
 import { registerAllTools } from "../../../src/tools/register-all.js";
 import { registerAllResources } from "../../../src/resources/register-all.js";
 import { registerAllPrompts } from "../../../src/prompts/register-all.js";
+import { applyOpenAIProfile, OPENAI_EXCLUDED_COUNT, OPENAI_CSP } from "../../../src/openai-profile.js";
 import { log } from "../../../src/logger.js";
 import { FrihetClient } from "./client.js";
 import { authHandler } from "./auth-handler.js";
@@ -65,6 +66,17 @@ export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
     // The private property mismatch prevents direct cast, so we bridge via unknown.
     // Structurally identical at runtime — this is safe.
     const server = this.server as unknown as Parameters<typeof registerAllTools>[0];
+
+    // Apply OpenAI-safe profile if this worker is deployed in OpenAI mode
+    const openaiMode = this.env.FRIHET_OPENAI_MODE === "true";
+    if (openaiMode) {
+      applyOpenAIProfile(server);
+      log({
+        level: "info",
+        message: `OpenAI safety profile active — ${OPENAI_EXCLUDED_COUNT} tools excluded`,
+        operation: "session_init",
+      });
+    }
 
     registerAllTools(server, client);
     registerAllResources(server);
@@ -119,7 +131,7 @@ const oauthProvider = new OAuthProvider({
 const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><circle cx="250" cy="250" r="230" fill="#171717"/></svg>`;
 
 /** Security headers applied to every response */
-const SECURITY_HEADERS: Record<string, string> = {
+const BASE_SECURITY_HEADERS: Record<string, string> = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
@@ -127,10 +139,19 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
 
+/** Build security headers — adds CSP in OpenAI mode */
+function getSecurityHeaders(env: Env): Record<string, string> {
+  const headers = { ...BASE_SECURITY_HEADERS };
+  if (env.FRIHET_OPENAI_MODE === "true") {
+    headers["Content-Security-Policy"] = OPENAI_CSP;
+  }
+  return headers;
+}
+
 /** Clone a response adding security headers (immutable Response workaround) */
-function withSecurityHeaders(response: Response): Response {
+function withSecurityHeaders(response: Response, env: Env): Response {
   const headers = new Headers(response.headers);
-  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+  for (const [key, value] of Object.entries(getSecurityHeaders(env))) {
     if (!headers.has(key)) headers.set(key, value);
   }
   return new Response(response.body, {
@@ -151,7 +172,7 @@ export default {
       return withSecurityHeaders(new Response(null, {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }));
+      }), env);
     }
 
     // OpenAI domain verification
@@ -235,6 +256,6 @@ export default {
       },
     });
 
-    return withSecurityHeaders(response);
+    return withSecurityHeaders(response, env);
   },
 } satisfies ExportedHandler<Env>;
