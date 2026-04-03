@@ -177,7 +177,7 @@ export default {
 
     // OpenAI domain verification
     if (url.pathname === "/.well-known/openai-apps-challenge") {
-      return new Response("n1HADESagZNO49wuoz8r9exBEq9GODR5bcno1DFveT4", {
+      return new Response("giPs9CNX4aJdxwXd1eeMzHIQm2FvFrJ4RkSlWs_bLEE", {
         headers: { "Content-Type": "text/plain" },
       });
     }

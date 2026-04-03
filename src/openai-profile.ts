@@ -210,8 +210,14 @@ const EXCLUDE_RESOURCES = new Set([
  * OpenAI requires CSP specifying the exact domains the app fetches from.
  */
 export const OPENAI_CSP =
-  "default-src 'none'; " +
-  "connect-src https://api.frihet.io https://us-central1-gen-lang-client-0335716041.cloudfunctions.net";
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; " +
+  "style-src 'self' 'unsafe-inline'; " +
+  "connect-src 'self' https://api.frihet.io https://us-central1-gen-lang-client-0335716041.cloudfunctions.net " +
+    "https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; " +
+  "frame-src https://accounts.google.com https://github.com https://login.microsoftonline.com; " +
+  "img-src 'self' data: https:; " +
+  "font-src 'self'";
 
 /* ------------------------------------------------------------------ */
 /*  Profile applicator                                                 */
