@@ -30,5 +30,16 @@ port = 8788
 [env.openai]
 name = "frihet-openai-mcp"
 routes = [{ pattern = "openai-mcp.frihet.io/*", zone_name = "frihet.io" }]
+
 [env.openai.vars]
 FRIHET_OPENAI_MODE = "true"
+
+# DO and KV are NOT inherited — must be redeclared
+[env.openai.durable_objects]
+bindings = [
+  { name = "MCP_OBJECT", class_name = "FrihetMCP" }
+]
+
+[[env.openai.kv_namespaces]]
+binding = "OAUTH_KV"
+id = "9207b98598f849109139ad11f3b0ac51"
