@@ -26,10 +26,12 @@ function main(): void {
 
   if (!apiKey) {
     console.error(
-      "Error: FRIHET_API_KEY environment variable is required.\n" +
-        "Set it in your MCP configuration or export it in your shell.\n\n" +
-        "Example:\n" +
-        '  export FRIHET_API_KEY="fri_your_api_key_here"\n',
+      "Error: FRIHET_API_KEY environment variable is required.\n\n" +
+        "Get your API key:\n" +
+        "  1. Create a free account at https://app.frihet.io\n" +
+        "  2. Go to Settings > Developers > API Keys\n" +
+        "  3. Create a key and add it to your MCP configuration\n\n" +
+        "Documentation: https://docs.frihet.io/desarrolladores/mcp-server\n",
     );
     process.exit(1);
   }
