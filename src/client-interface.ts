@@ -84,6 +84,15 @@ export interface IFrihetClient {
   createClientNote(clientId: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
   deleteClientNote(clientId: string, noteId: string): Promise<void>;
 
+  // Deposits
+  listDeposits(params?: { limit?: number; offset?: number; after?: string; fields?: string; from?: string; to?: string; clientId?: string; status?: string }): Promise<PaginatedResponse<Record<string, unknown>>>;
+  getDeposit(id: string): Promise<Record<string, unknown>>;
+  createDeposit(data: Record<string, unknown>): Promise<Record<string, unknown>>;
+  updateDeposit(id: string, data: Record<string, unknown>): Promise<Record<string, unknown>>;
+  deleteDeposit(id: string): Promise<void>;
+  applyDeposit(id: string, data?: Record<string, unknown>): Promise<Record<string, unknown>>;
+  refundDeposit(id: string, data?: Record<string, unknown>): Promise<Record<string, unknown>>;
+
   // Intelligence endpoints
   getBusinessContext(): Promise<Record<string, unknown>>;
   getMonthlySummary(month?: string): Promise<Record<string, unknown>>;

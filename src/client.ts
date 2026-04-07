@@ -543,6 +543,51 @@ export class FrihetClient {
     return this.request("DELETE", `/clients/${encodeURIComponent(clientId)}/notes/${encodeURIComponent(noteId)}`);
   }
 
+  // ---------------------------------------------------------------- Deposits
+  // ----------------------------------------------------------------
+
+  async listDeposits(
+    params?: { limit?: number; offset?: number; after?: string; fields?: string; from?: string; to?: string; clientId?: string; status?: string },
+  ): Promise<PaginatedResponse<Record<string, unknown>>> {
+    return this.requestPaginated("GET", "/deposits", undefined, {
+      limit: params?.limit,
+      offset: params?.offset,
+      after: params?.after,
+      fields: params?.fields,
+      from: params?.from,
+      to: params?.to,
+      clientId: params?.clientId,
+      status: params?.status,
+    });
+  }
+
+  async getDeposit(id: string): Promise<Record<string, unknown>> {
+    return this.request("GET", `/deposits/${encodeURIComponent(id)}`);
+  }
+
+  async createDeposit(data: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", "/deposits", data);
+  }
+
+  async updateDeposit(
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.request("PATCH", `/deposits/${encodeURIComponent(id)}`, data);
+  }
+
+  async deleteDeposit(id: string): Promise<void> {
+    return this.request("DELETE", `/deposits/${encodeURIComponent(id)}`);
+  }
+
+  async applyDeposit(id: string, data?: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", `/deposits/${encodeURIComponent(id)}/apply`, data ?? {});
+  }
+
+  async refundDeposit(id: string, data?: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", `/deposits/${encodeURIComponent(id)}/refund`, data ?? {});
+  }
+
   // ---------------------------------------------------------------- Intelligence
   // ----------------------------------------------------------------
 

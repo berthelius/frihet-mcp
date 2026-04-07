@@ -469,6 +469,22 @@ export const noteItemOutput = z.object({
   updatedAt: z.string().optional(),
 }).passthrough();
 
+export const depositItemOutput = z.object({
+  id: z.string(),
+  clientId: z.string(),
+  clientName: z.string().optional(),
+  amount: z.number(),
+  currency: z.string().optional(),
+  date: z.string().optional(),
+  description: z.string().optional(),
+  status: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+}).passthrough();
+
 /** Schema for action results (send, mark paid, etc.) */
 export const actionResultOutput = z.object({
   success: z.boolean(),
