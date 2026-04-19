@@ -19,6 +19,7 @@ import { registerAllResources } from "../../../src/resources/register-all.js";
 import { registerAllPrompts } from "../../../src/prompts/register-all.js";
 import { applyOpenAIProfile, OPENAI_EXCLUDED_COUNT, OPENAI_CSP } from "../../../src/openai-profile.js";
 import { log } from "../../../src/logger.js";
+import { initLangfuse, setTraceContext } from "../../../src/observability.js";
 import { FrihetClient } from "./client.js";
 import { authHandler } from "./auth-handler.js";
 
@@ -59,6 +60,19 @@ export class FrihetMCP extends McpAgent<Env, Record<string, never>, AuthProps> {
         locale: this.props?.locale,
       },
     });
+
+    // Inject Langfuse config from Worker env vars and set per-session trace context.
+    // Uses env bindings (not process.env) since Workers don't have a process object.
+    initLangfuse({
+      publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: this.env.LANGFUSE_SECRET_KEY,
+      baseUrl: this.env.LANGFUSE_BASE_URL,
+    });
+    setTraceContext({
+      userId: this.props?.userId ?? this.props?.email,
+      mcpVersion: "mcp/1.0",
+    });
+
     const client = new FrihetClient(apiKey);
 
     // The worker and root project both use @modelcontextprotocol/sdk 1.26.0 but

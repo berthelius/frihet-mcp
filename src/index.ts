@@ -20,6 +20,7 @@ import { registerAllPrompts } from "./prompts/register-all.js";
 import { applyOpenAIProfile, OPENAI_EXCLUDED_COUNT, OPENAI_EXCLUDED_RESOURCE_COUNT } from "./openai-profile.js";
 import { log } from "./logger.js";
 import { registerShutdownHook } from "./metrics.js";
+import { setTraceContext } from "./observability.js";
 
 function main(): void {
   const apiKey = process.env.FRIHET_API_KEY;
@@ -67,6 +68,13 @@ function main(): void {
   }
 
   const client = new FrihetClient(apiKey, baseUrl);
+
+  // Set trace context for Langfuse (reads LANGFUSE_* from process.env automatically).
+  // clientName can be overridden via FRIHET_CLIENT_NAME env var by the MCP host.
+  setTraceContext({
+    mcpVersion: "mcp/1.0",
+    clientName: process.env.FRIHET_CLIENT_NAME,
+  });
 
   const server = new McpServer({
     name: "frihet-erp",
