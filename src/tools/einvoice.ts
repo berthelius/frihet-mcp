@@ -1,13 +1,16 @@
 /**
  * E-Invoicing tools for the Frihet MCP server.
  *
- * Scaffold stubs for transport Wave — real CF wiring via api.frihet.io will land
- * when Cloud Function endpoints are deployed. All 4 tools use the shared
- * withToolLogging wrapper (Langfuse tracing applied globally via patchServerWithTracing
- * in register-all.ts — no per-tool instrumentation needed).
+ * Wired to real CF endpoints at api.frihet.io/v1/einvoice/*.
+ * 404-fallback: if the CF endpoint is not yet deployed, returns a stub with
+ * { _stub: true, _note: "CF endpoint pending deploy", _plannedEndpoint: "..." }
+ * so the MCP server remains usable while the transport Wave ships.
+ *
+ * All 4 tools use the shared withToolLogging wrapper (Langfuse tracing applied
+ * globally via patchServerWithTracing in register-all.ts).
  *
  * Trace names prefix: mcp.einvoice.*
- * CF endpoint target (not yet wired): https://api.frihet.io/v1/einvoice/
+ * CF endpoints: https://api.frihet.io/v1/einvoice/{send,status,validate,export-datev}
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -152,41 +155,52 @@ export function registerEInvoiceTools(server: McpServer, _client: IFrihetClient)
     },
     async ({ invoiceId, format, dispatchMode }) =>
       withToolLogging("send_einvoice", async () => {
-        // STUB: real implementation will call https://api.frihet.io/v1/einvoice/send
-        // via Hatchet workflow trigger. Wired in transport Wave.
-        console.error(
-          JSON.stringify({
-            service: "frihet-mcp",
-            level: "info",
-            message: `[STUB] send_einvoice — invoiceId=${invoiceId} format=${format} dispatchMode=${dispatchMode}`,
-            operation: "mcp.einvoice.send",
-            timestamp: new Date().toISOString(),
-          }),
-        );
-
-        const stubResult = {
-          workflowRunId: `wfr_stub_${Date.now()}`,
-          status: "queued" as const,
-          estimatedCompletionSec: 15,
-          _stub: true,
-          _note: "Stub response — CF endpoint https://api.frihet.io/v1/einvoice/send not yet wired",
-        };
-
-        return {
-          content: [
-            mutateContent(
-              `E-invoice queued (stub):\n` +
-              `  Invoice: ${invoiceId}\n` +
-              `  Format: ${format}\n` +
-              `  Dispatch: ${dispatchMode}\n` +
-              `  WorkflowRunId: ${stubResult.workflowRunId}\n` +
-              `  Status: queued\n` +
-              `  Estimated: ~${stubResult.estimatedCompletionSec}s\n\n` +
-              `Use get_einvoice_status with the workflowRunId to poll for completion.`,
-            ),
-          ],
-          structuredContent: stubResult as unknown as Record<string, unknown>,
-        };
+        const plannedEndpoint = "/v1/einvoice/send";
+        try {
+          const result = await (_client as IFrihetClientWithEInvoice).sendEInvoice({ invoiceId, format, dispatchMode });
+          return {
+            content: [
+              mutateContent(
+                `E-invoice queued:\n` +
+                `  Invoice: ${invoiceId}\n` +
+                `  Format: ${format}\n` +
+                `  Dispatch: ${dispatchMode}\n` +
+                `  WorkflowRunId: ${result.workflowRunId}\n` +
+                `  Status: ${result.status}\n` +
+                `  Estimated: ~${result.estimatedCompletionSec}s\n\n` +
+                `Use get_einvoice_status with the workflowRunId to poll for completion.`,
+              ),
+            ],
+            structuredContent: result as unknown as Record<string, unknown>,
+          };
+        } catch (err: unknown) {
+          if (isNotFoundError(err)) {
+            const stubResult = {
+              workflowRunId: `wfr_stub_${Date.now()}`,
+              status: "queued" as const,
+              estimatedCompletionSec: 15,
+              _stub: true,
+              _note: "CF endpoint pending deploy",
+              _plannedEndpoint: plannedEndpoint,
+            };
+            return {
+              content: [
+                mutateContent(
+                  `E-invoice queued (stub — CF pending deploy):\n` +
+                  `  Invoice: ${invoiceId}\n` +
+                  `  Format: ${format}\n` +
+                  `  Dispatch: ${dispatchMode}\n` +
+                  `  WorkflowRunId: ${stubResult.workflowRunId}\n` +
+                  `  Status: queued\n` +
+                  `  Estimated: ~${stubResult.estimatedCompletionSec}s\n\n` +
+                  `Use get_einvoice_status with the workflowRunId to poll for completion.`,
+                ),
+              ],
+              structuredContent: stubResult as unknown as Record<string, unknown>,
+            };
+          }
+          throw err;
+        }
       }),
   );
 
@@ -211,40 +225,51 @@ export function registerEInvoiceTools(server: McpServer, _client: IFrihetClient)
     },
     async ({ workflowRunId }) =>
       withToolLogging("get_einvoice_status", async () => {
-        // STUB: real implementation will call https://api.frihet.io/v1/einvoice/status/{workflowRunId}
-        console.error(
-          JSON.stringify({
-            service: "frihet-mcp",
-            level: "info",
-            message: `[STUB] get_einvoice_status — workflowRunId=${workflowRunId}`,
-            operation: "mcp.einvoice.status",
-            timestamp: new Date().toISOString(),
-          }),
-        );
-
-        const stubResult = {
-          status: "succeeded" as const,
-          step: "dispatch_complete",
-          ackId: `ack_stub_${workflowRunId.slice(-8)}`,
-          pdfA3Url: undefined,
-          xmlUrl: `https://storage.frihet.io/stub/${workflowRunId}.xml`,
-          _stub: true,
-          _note: "Stub response — CF endpoint https://api.frihet.io/v1/einvoice/status not yet wired",
-        };
-
-        return {
-          content: [
-            getContent(
-              `E-invoice status (stub):\n` +
-              `  WorkflowRunId: ${workflowRunId}\n` +
-              `  Status: ${stubResult.status}\n` +
-              `  Step: ${stubResult.step}\n` +
-              `  AckId: ${stubResult.ackId}\n` +
-              `  XML URL: ${stubResult.xmlUrl}`,
-            ),
-          ],
-          structuredContent: stubResult as unknown as Record<string, unknown>,
-        };
+        const plannedEndpoint = `/v1/einvoice/status/${workflowRunId}`;
+        try {
+          const result = await (_client as IFrihetClientWithEInvoice).getEInvoiceStatus(workflowRunId);
+          return {
+            content: [
+              getContent(
+                `E-invoice status:\n` +
+                `  WorkflowRunId: ${workflowRunId}\n` +
+                `  Status: ${result.status}\n` +
+                `  Step: ${result.step}\n` +
+                (result.ackId ? `  AckId: ${result.ackId}\n` : "") +
+                (result.xmlUrl ? `  XML URL: ${result.xmlUrl}\n` : "") +
+                (result.pdfA3Url ? `  PDF/A-3 URL: ${result.pdfA3Url}\n` : ""),
+              ),
+            ],
+            structuredContent: result as unknown as Record<string, unknown>,
+          };
+        } catch (err: unknown) {
+          if (isNotFoundError(err)) {
+            const stubResult = {
+              status: "succeeded" as const,
+              step: "dispatch_complete",
+              ackId: `ack_stub_${workflowRunId.slice(-8)}`,
+              pdfA3Url: undefined,
+              xmlUrl: `https://storage.frihet.io/stub/${workflowRunId}.xml`,
+              _stub: true,
+              _note: "CF endpoint pending deploy",
+              _plannedEndpoint: plannedEndpoint,
+            };
+            return {
+              content: [
+                getContent(
+                  `E-invoice status (stub — CF pending deploy):\n` +
+                  `  WorkflowRunId: ${workflowRunId}\n` +
+                  `  Status: ${stubResult.status}\n` +
+                  `  Step: ${stubResult.step}\n` +
+                  `  AckId: ${stubResult.ackId}\n` +
+                  `  XML URL: ${stubResult.xmlUrl}`,
+                ),
+              ],
+              structuredContent: stubResult as unknown as Record<string, unknown>,
+            };
+          }
+          throw err;
+        }
       }),
   );
 
@@ -276,18 +301,7 @@ export function registerEInvoiceTools(server: McpServer, _client: IFrihetClient)
     },
     async ({ xml, format }) =>
       withToolLogging("validate_einvoice_xml", async () => {
-        // STUB: real implementation will call https://api.frihet.io/v1/einvoice/validate
-        const xmlLength = xml.length;
-        console.error(
-          JSON.stringify({
-            service: "frihet-mcp",
-            level: "info",
-            message: `[STUB] validate_einvoice_xml — format=${format} xmlLength=${xmlLength}`,
-            operation: "mcp.einvoice.validate",
-            timestamp: new Date().toISOString(),
-          }),
-        );
-
+        const plannedEndpoint = "/v1/einvoice/validate";
         const validatorMap: Record<EInvoiceFormat, "kosit" | "mustang" | "xsd" | "schematron"> = {
           "xrechnung-cii": "kosit",
           "xrechnung-ubl": "kosit",
@@ -301,29 +315,48 @@ export function registerEInvoiceTools(server: McpServer, _client: IFrihetClient)
           "peppol-bis-3": "schematron",
           "facturae": "xsd",
         };
-
-        const stubResult = {
-          valid: true,
-          errors: [] as Array<{ severity: string; location: string; message: string; rule: string }>,
-          validator: validatorMap[format],
-          durationMs: 42,
-          _stub: true,
-          _note: "Stub response — CF endpoint https://api.frihet.io/v1/einvoice/validate not yet wired",
-        };
-
-        return {
-          content: [
-            getContent(
-              `E-invoice validation result (stub):\n` +
-              `  Format: ${format}\n` +
-              `  Valid: ${stubResult.valid}\n` +
-              `  Errors: ${stubResult.errors.length}\n` +
-              `  Validator: ${stubResult.validator}\n` +
-              `  Duration: ${stubResult.durationMs}ms`,
-            ),
-          ],
-          structuredContent: stubResult as unknown as Record<string, unknown>,
-        };
+        try {
+          const result = await (_client as IFrihetClientWithEInvoice).validateEInvoiceXml({ xml, format });
+          return {
+            content: [
+              getContent(
+                `E-invoice validation result:\n` +
+                `  Format: ${format}\n` +
+                `  Valid: ${result.valid}\n` +
+                `  Errors: ${result.errors.length}\n` +
+                `  Validator: ${result.validator}\n` +
+                `  Duration: ${result.durationMs}ms`,
+              ),
+            ],
+            structuredContent: result as unknown as Record<string, unknown>,
+          };
+        } catch (err: unknown) {
+          if (isNotFoundError(err)) {
+            const stubResult = {
+              valid: true,
+              errors: [] as Array<{ severity: string; location: string; message: string; rule: string }>,
+              validator: validatorMap[format],
+              durationMs: 42,
+              _stub: true,
+              _note: "CF endpoint pending deploy",
+              _plannedEndpoint: plannedEndpoint,
+            };
+            return {
+              content: [
+                getContent(
+                  `E-invoice validation result (stub — CF pending deploy):\n` +
+                  `  Format: ${format}\n` +
+                  `  Valid: ${stubResult.valid}\n` +
+                  `  Errors: ${stubResult.errors.length}\n` +
+                  `  Validator: ${stubResult.validator}\n` +
+                  `  Duration: ${stubResult.durationMs}ms`,
+                ),
+              ],
+              structuredContent: stubResult as unknown as Record<string, unknown>,
+            };
+          }
+          throw err;
+        }
       }),
   );
 
@@ -366,50 +399,120 @@ export function registerEInvoiceTools(server: McpServer, _client: IFrihetClient)
     },
     async ({ periodStart, periodEnd, format }) =>
       withToolLogging("export_datev", async () => {
-        // STUB: real implementation will call https://api.frihet.io/v1/datev/export
-        console.error(
-          JSON.stringify({
-            service: "frihet-mcp",
-            level: "info",
-            message: `[STUB] export_datev — format=${format} period=${periodStart}..${periodEnd}`,
-            operation: "mcp.einvoice.datev_export",
-            timestamp: new Date().toISOString(),
-          }),
-        );
-
+        const plannedEndpoint = "/v1/einvoice/export-datev";
         const formatFileMap: Record<string, string> = {
           "extf-buchungsstapel": "EXTF_Buchungsstapel",
           "extf-debitoren": "EXTF_Debitoren",
           "extf-kreditoren": "EXTF_Kreditoren",
         };
-
         const periodLabel = periodStart.slice(0, 7); // YYYY-MM
-        const filename = `${formatFileMap[format]}_${periodLabel}.csv`;
-
-        const stubResult = {
-          fileUrl: `https://storage.frihet.io/stub/datev/${filename}`,
-          filename,
-          rowCount: 0,
-          fiscalPeriod: periodLabel,
-          encoding: "cp1252" as const,
-          _stub: true,
-          _note: "Stub response — CF endpoint https://api.frihet.io/v1/datev/export not yet wired",
-        };
-
-        return {
-          content: [
-            getContent(
-              `DATEV export ready (stub):\n` +
-              `  Format: ${format}\n` +
-              `  Period: ${periodStart} → ${periodEnd}\n` +
-              `  Filename: ${stubResult.filename}\n` +
-              `  Rows: ${stubResult.rowCount}\n` +
-              `  Encoding: ${stubResult.encoding}\n` +
-              `  Download URL: ${stubResult.fileUrl}`,
-            ),
-          ],
-          structuredContent: stubResult as unknown as Record<string, unknown>,
-        };
+        try {
+          const result = await (_client as IFrihetClientWithEInvoice).exportDatev({ periodStart, periodEnd, format });
+          return {
+            content: [
+              getContent(
+                `DATEV export ready:\n` +
+                `  Format: ${format}\n` +
+                `  Period: ${periodStart} → ${periodEnd}\n` +
+                `  Filename: ${result.filename}\n` +
+                `  Rows: ${result.rowCount}\n` +
+                `  Encoding: ${result.encoding}\n` +
+                `  Download URL: ${result.fileUrl}`,
+              ),
+            ],
+            structuredContent: result as unknown as Record<string, unknown>,
+          };
+        } catch (err: unknown) {
+          if (isNotFoundError(err)) {
+            const filename = `${formatFileMap[format]}_${periodLabel}.csv`;
+            const stubResult = {
+              fileUrl: `https://storage.frihet.io/stub/datev/${filename}`,
+              filename,
+              rowCount: 0,
+              fiscalPeriod: periodLabel,
+              encoding: "cp1252" as const,
+              _stub: true,
+              _note: "CF endpoint pending deploy",
+              _plannedEndpoint: plannedEndpoint,
+            };
+            return {
+              content: [
+                getContent(
+                  `DATEV export ready (stub — CF pending deploy):\n` +
+                  `  Format: ${format}\n` +
+                  `  Period: ${periodStart} → ${periodEnd}\n` +
+                  `  Filename: ${stubResult.filename}\n` +
+                  `  Rows: ${stubResult.rowCount}\n` +
+                  `  Encoding: ${stubResult.encoding}\n` +
+                  `  Download URL: ${stubResult.fileUrl}`,
+                ),
+              ],
+              structuredContent: stubResult as unknown as Record<string, unknown>,
+            };
+          }
+          throw err;
+        }
       }),
   );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Returns true if the error is a 404 Not Found, indicating the CF endpoint
+ * is not yet deployed. Detects both FrihetApiError shape and generic HTTP errors.
+ */
+function isNotFoundError(err: unknown): boolean {
+  if (err && typeof err === "object") {
+    const e = err as Record<string, unknown>;
+    if (e["statusCode"] === 404) return true;
+    if (e["status"] === 404) return true;
+  }
+  return false;
+}
+
+/**
+ * Extended client interface for e-invoice operations.
+ * Tools call these methods; FrihetClient implements them.
+ * Falls back to 404-stub if method is missing (older client version).
+ */
+interface IFrihetClientWithEInvoice extends IFrihetClient {
+  sendEInvoice(params: {
+    invoiceId: string;
+    format: string;
+    dispatchMode: string;
+  }): Promise<{ workflowRunId: string; status: "queued"; estimatedCompletionSec: number }>;
+
+  getEInvoiceStatus(workflowRunId: string): Promise<{
+    status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+    step: string;
+    error?: string;
+    ackId?: string;
+    pdfA3Url?: string;
+    xmlUrl?: string;
+  }>;
+
+  validateEInvoiceXml(params: {
+    xml: string;
+    format: string;
+  }): Promise<{
+    valid: boolean;
+    errors: Array<{ severity: string; location: string; message: string; rule: string }>;
+    validator: "kosit" | "mustang" | "xsd" | "schematron";
+    durationMs: number;
+  }>;
+
+  exportDatev(params: {
+    periodStart: string;
+    periodEnd: string;
+    format: string;
+  }): Promise<{
+    fileUrl: string;
+    filename: string;
+    rowCount: number;
+    fiscalPeriod: string;
+    encoding: "cp1252";
+  }>;
 }

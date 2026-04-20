@@ -1,5 +1,5 @@
 /**
- * Tests for e-invoice scaffold tools.
+ * Tests for e-invoice MCP tools — wired to api.frihet.io with 404-fallback stubs.
  *
  * Uses Node.js built-in test runner (node:test + node:assert) — no extra deps.
  * Run: node --experimental-strip-types --test src/__tests__/einvoice-tools.test.ts
@@ -7,9 +7,10 @@
  *
  * Coverage:
  *   1. Tool registration — all 4 tools registered on McpServer (62→66)
- *   2. Input schema validation — happy path + bad path per tool
- *   3. Stub response shape — matches declared outputSchema
- *   4. Langfuse wrapper confirmed invoked via traceMCPTool patch
+ *   2. 404-fallback path — when CF endpoint returns 404, stub fallback fires
+ *   3. Success path — when CF endpoint returns real data, it is passed through
+ *   4. Stub response shape — matches declared outputSchema (via fallback)
+ *   5. Langfuse wrapper confirmed invoked via traceMCPTool patch
  */
 
 import { test, describe, beforeEach } from "node:test";
@@ -44,6 +45,52 @@ class StubMcpServer {
   }
 }
 
+// ── Client stubs ─────────────────────────────────────────────────────────────
+
+/** Simulates CF endpoint not yet deployed (returns 404). */
+function make404Client(): import("../client-interface.js").IFrihetClient {
+  const notFound = () => {
+    const err = Object.assign(new Error("Not Found"), { statusCode: 404, errorCode: "not_found" });
+    return Promise.reject(err);
+  };
+  return {
+    sendEInvoice: notFound,
+    getEInvoiceStatus: notFound,
+    validateEInvoiceXml: notFound,
+    exportDatev: notFound,
+  } as unknown as import("../client-interface.js").IFrihetClient;
+}
+
+/** Simulates CF endpoint live and returning real data. */
+function makeLiveClient(): import("../client-interface.js").IFrihetClient {
+  return {
+    sendEInvoice: async () => ({
+      workflowRunId: "wfr_live_abc123",
+      status: "queued" as const,
+      estimatedCompletionSec: 12,
+    }),
+    getEInvoiceStatus: async () => ({
+      status: "succeeded" as const,
+      step: "dispatch_complete",
+      ackId: "ack_live_xyz",
+      xmlUrl: "https://storage.frihet.io/live/wfr_live_abc123.xml",
+    }),
+    validateEInvoiceXml: async () => ({
+      valid: true,
+      errors: [],
+      validator: "kosit" as const,
+      durationMs: 87,
+    }),
+    exportDatev: async () => ({
+      fileUrl: "https://storage.frihet.io/live/datev/EXTF_Buchungsstapel_2026-01.csv",
+      filename: "EXTF_Buchungsstapel_2026-01.csv",
+      rowCount: 42,
+      fiscalPeriod: "2026-01",
+      encoding: "cp1252" as const,
+    }),
+  } as unknown as import("../client-interface.js").IFrihetClient;
+}
+
 // ── Langfuse trace tracker ───────────────────────────────────────────────────
 
 let langfuseCallCount = 0;
@@ -63,8 +110,7 @@ describe("E-Invoice Tools — Registration", () => {
 
   beforeEach(async () => {
     server = new StubMcpServer();
-    // We need a minimal IFrihetClient stub
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
 
     const { registerEInvoiceTools } = await import("../tools/einvoice.js");
     registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, clientStub);
@@ -94,7 +140,7 @@ describe("E-Invoice Tools — Registration", () => {
 describe("E-Invoice Tools — registerAllTools includes new tools (62→66)", () => {
   test("registerAllTools wires 4 new e-invoice tools via patchServerWithTracing", async () => {
     const server = new StubMcpServer();
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
 
     // Apply the same patch registerAllTools does
     const originalRegisterTool = server.registerTool.bind(server);
@@ -127,7 +173,7 @@ describe("send_einvoice — stub response shape", () => {
 
   beforeEach(async () => {
     const server = new StubMcpServer();
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
     const { registerEInvoiceTools } = await import("../tools/einvoice.js");
     registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, clientStub);
     sendTool = server.tools.get("send_einvoice");
@@ -183,7 +229,7 @@ describe("get_einvoice_status — stub response shape", () => {
 
   beforeEach(async () => {
     const server = new StubMcpServer();
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
     const { registerEInvoiceTools } = await import("../tools/einvoice.js");
     registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, clientStub);
     statusTool = server.tools.get("get_einvoice_status");
@@ -213,7 +259,7 @@ describe("validate_einvoice_xml — stub response shape", () => {
 
   beforeEach(async () => {
     const server = new StubMcpServer();
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
     const { registerEInvoiceTools } = await import("../tools/einvoice.js");
     registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, clientStub);
     validateTool = server.tools.get("validate_einvoice_xml");
@@ -267,7 +313,7 @@ describe("export_datev — stub response shape", () => {
 
   beforeEach(async () => {
     const server = new StubMcpServer();
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
     const { registerEInvoiceTools } = await import("../tools/einvoice.js");
     registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, clientStub);
     datevTool = server.tools.get("export_datev");
@@ -330,7 +376,7 @@ describe("export_datev — stub response shape", () => {
 describe("Langfuse wrapper — patchServerWithTracing wraps all tool callbacks", () => {
   test("patched registerTool intercepts all 4 einvoice tools (simulates traceMCPTool path)", async () => {
     const server = new StubMcpServer();
-    const clientStub = {} as import("../client-interface.js").IFrihetClient;
+    const clientStub = make404Client();
 
     // Simulate patchServerWithTracing (same mechanism as register-all.ts)
     let interceptCount = 0;
@@ -379,3 +425,114 @@ function getValidArgs(toolName: string): Record<string, unknown> {
       return {};
   }
 }
+
+// ── 404-fallback tests ────────────────────────────────────────────────────────
+
+describe("404-fallback path — CF endpoint not yet deployed", () => {
+  async function makeServer(client: import("../client-interface.js").IFrihetClient): Promise<StubMcpServer> {
+    const server = new StubMcpServer();
+    const { registerEInvoiceTools } = await import("../tools/einvoice.js");
+    registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, client);
+    return server;
+  }
+
+  test("send_einvoice: 404 → stub with _stub=true, _plannedEndpoint set", async () => {
+    const server = await makeServer(make404Client());
+    const tool = server.tools.get("send_einvoice")!;
+    const result = await tool.handler({ invoiceId: "inv_test", format: "xrechnung-cii", dispatchMode: "email" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["_stub"], true, "_stub should be true on 404-fallback");
+    assert.equal(sc["_note"], "CF endpoint pending deploy");
+    assert.ok(typeof sc["_plannedEndpoint"] === "string", "_plannedEndpoint should be set");
+    assert.equal(sc["status"], "queued", "fallback status should be queued");
+    assert.ok(typeof sc["workflowRunId"] === "string", "workflowRunId should be string");
+  });
+
+  test("get_einvoice_status: 404 → stub with _stub=true, _plannedEndpoint set", async () => {
+    const server = await makeServer(make404Client());
+    const tool = server.tools.get("get_einvoice_status")!;
+    const result = await tool.handler({ workflowRunId: "wfr_pending_123" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["_stub"], true, "_stub should be true on 404-fallback");
+    assert.equal(sc["_note"], "CF endpoint pending deploy");
+    assert.ok(typeof sc["_plannedEndpoint"] === "string", "_plannedEndpoint should be set");
+    assert.ok(sc["_plannedEndpoint"] as string, "/v1/einvoice/status/wfr_pending_123");
+  });
+
+  test("validate_einvoice_xml: 404 → stub with _stub=true, validator derived from format", async () => {
+    const server = await makeServer(make404Client());
+    const tool = server.tools.get("validate_einvoice_xml")!;
+    const result = await tool.handler({ xml: "<Invoice/>", format: "xrechnung-cii" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["_stub"], true, "_stub should be true on 404-fallback");
+    assert.equal(sc["_note"], "CF endpoint pending deploy");
+    assert.equal(sc["validator"], "kosit", "validator should derive from format even in fallback");
+    assert.equal(sc["valid"], true);
+  });
+
+  test("export_datev: 404 → stub with _stub=true, filename derived from params", async () => {
+    const server = await makeServer(make404Client());
+    const tool = server.tools.get("export_datev")!;
+    const result = await tool.handler({ periodStart: "2026-03-01", periodEnd: "2026-03-31", format: "extf-buchungsstapel" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["_stub"], true, "_stub should be true on 404-fallback");
+    assert.equal(sc["_note"], "CF endpoint pending deploy");
+    assert.ok((sc["filename"] as string).includes("EXTF_Buchungsstapel"), "filename should include format prefix");
+    assert.equal(sc["fiscalPeriod"], "2026-03", "fiscalPeriod should derive from periodStart");
+    assert.equal(sc["encoding"], "cp1252");
+  });
+});
+
+// ── Success-path tests (live client mock) ─────────────────────────────────────
+
+describe("Success path — CF endpoint live, real data returned", () => {
+  async function makeServer(client: import("../client-interface.js").IFrihetClient): Promise<StubMcpServer> {
+    const server = new StubMcpServer();
+    const { registerEInvoiceTools } = await import("../tools/einvoice.js");
+    registerEInvoiceTools(server as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer, client);
+    return server;
+  }
+
+  test("send_einvoice: live client → workflowRunId from CF response, no _stub flag", async () => {
+    const server = await makeServer(makeLiveClient());
+    const tool = server.tools.get("send_einvoice")!;
+    const result = await tool.handler({ invoiceId: "inv_live", format: "peppol-bis-3", dispatchMode: "peppol" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["workflowRunId"], "wfr_live_abc123");
+    assert.equal(sc["status"], "queued");
+    assert.equal(sc["estimatedCompletionSec"], 12);
+    assert.equal(sc["_stub"], undefined, "no _stub flag on live response");
+  });
+
+  test("get_einvoice_status: live client → real status and ackId", async () => {
+    const server = await makeServer(makeLiveClient());
+    const tool = server.tools.get("get_einvoice_status")!;
+    const result = await tool.handler({ workflowRunId: "wfr_live_abc123" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["status"], "succeeded");
+    assert.equal(sc["ackId"], "ack_live_xyz");
+    assert.equal(sc["_stub"], undefined, "no _stub flag on live response");
+  });
+
+  test("validate_einvoice_xml: live client → real durationMs and empty errors", async () => {
+    const server = await makeServer(makeLiveClient());
+    const tool = server.tools.get("validate_einvoice_xml")!;
+    const result = await tool.handler({ xml: "<Invoice/>", format: "xrechnung-cii" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["valid"], true);
+    assert.equal(sc["durationMs"], 87);
+    assert.equal((sc["errors"] as unknown[]).length, 0);
+    assert.equal(sc["_stub"], undefined, "no _stub flag on live response");
+  });
+
+  test("export_datev: live client → real rowCount and fileUrl from CF", async () => {
+    const server = await makeServer(makeLiveClient());
+    const tool = server.tools.get("export_datev")!;
+    const result = await tool.handler({ periodStart: "2026-01-01", periodEnd: "2026-01-31", format: "extf-buchungsstapel" });
+    const sc = result.structuredContent!;
+    assert.equal(sc["rowCount"], 42);
+    assert.equal(sc["fiscalPeriod"], "2026-01");
+    assert.ok((sc["fileUrl"] as string).includes("live"), "fileUrl should be from live CF");
+    assert.equal(sc["_stub"], undefined, "no _stub flag on live response");
+  });
+});

@@ -588,6 +588,54 @@ export class FrihetClient {
     return this.request("POST", `/deposits/${encodeURIComponent(id)}/refund`, data ?? {});
   }
 
+  // ---------------------------------------------------------------- E-Invoicing
+  // ----------------------------------------------------------------
+
+  async sendEInvoice(params: {
+    invoiceId: string;
+    format: string;
+    dispatchMode: string;
+  }): Promise<{ workflowRunId: string; status: "queued"; estimatedCompletionSec: number }> {
+    return this.request("POST", "/einvoice/send", params);
+  }
+
+  async getEInvoiceStatus(workflowRunId: string): Promise<{
+    status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+    step: string;
+    error?: string;
+    ackId?: string;
+    pdfA3Url?: string;
+    xmlUrl?: string;
+  }> {
+    return this.request("GET", `/einvoice/status/${encodeURIComponent(workflowRunId)}`);
+  }
+
+  async validateEInvoiceXml(params: {
+    xml: string;
+    format: string;
+  }): Promise<{
+    valid: boolean;
+    errors: Array<{ severity: string; location: string; message: string; rule: string }>;
+    validator: "kosit" | "mustang" | "xsd" | "schematron";
+    durationMs: number;
+  }> {
+    return this.request("POST", "/einvoice/validate", params);
+  }
+
+  async exportDatev(params: {
+    periodStart: string;
+    periodEnd: string;
+    format: string;
+  }): Promise<{
+    fileUrl: string;
+    filename: string;
+    rowCount: number;
+    fiscalPeriod: string;
+    encoding: "cp1252";
+  }> {
+    return this.request("POST", "/einvoice/export-datev", params);
+  }
+
   // ---------------------------------------------------------------- Intelligence
   // ----------------------------------------------------------------
 

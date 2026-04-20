@@ -285,7 +285,7 @@ If you need to digitize paper invoices or receipts, extract the data first (e.g.
 
 ## E-Invoicing (4 new in v1.7 pre-release)
 
-> Scaffold tools — CF endpoint wiring lands in transport Wave. Responses are stubs; real dispatch via `api.frihet.io/v1/einvoice/` wired when Cloud Functions deploy.
+> **Status: beta — CF endpoints rolling out 2026-04-21 to 2026-04-28.** Tools call `api.frihet.io/v1/einvoice/*` directly. If an endpoint is not yet deployed (404), the tool falls back to `{ _stub: true, _note: "CF endpoint pending deploy", _plannedEndpoint: "..." }` so the server remains usable while transport ships.
 
 | Tool | What it does |
 |------|-------------|

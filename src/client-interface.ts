@@ -97,4 +97,10 @@ export interface IFrihetClient {
   getBusinessContext(): Promise<Record<string, unknown>>;
   getMonthlySummary(month?: string): Promise<Record<string, unknown>>;
   getQuarterlyTaxes(quarter?: string): Promise<Record<string, unknown>>;
+
+  // E-Invoicing endpoints (CF rolling out 2026-04-21 to 2026-04-28; 404 → stub fallback)
+  sendEInvoice(params: { invoiceId: string; format: string; dispatchMode: string }): Promise<{ workflowRunId: string; status: "queued"; estimatedCompletionSec: number }>;
+  getEInvoiceStatus(workflowRunId: string): Promise<{ status: "queued" | "running" | "succeeded" | "failed" | "cancelled"; step: string; error?: string; ackId?: string; pdfA3Url?: string; xmlUrl?: string }>;
+  validateEInvoiceXml(params: { xml: string; format: string }): Promise<{ valid: boolean; errors: Array<{ severity: string; location: string; message: string; rule: string }>; validator: "kosit" | "mustang" | "xsd" | "schematron"; durationMs: number }>;
+  exportDatev(params: { periodStart: string; periodEnd: string; format: string }): Promise<{ fileUrl: string; filename: string; rowCount: number; fiscalPeriod: string; encoding: "cp1252" }>;
 }
