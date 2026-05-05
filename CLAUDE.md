@@ -44,12 +44,18 @@ MCP server that connects AI assistants (Claude Code, Cursor, Copilot, Codex, Win
 | Cursor MCP marketplace | not submitted | Wave 4 submission |
 | Claude Desktop MCP gallery | not submitted | Wave 4 submission |
 | GitHub stars | track | Weekly update |
-| `mcp.frihet.io/llms.txt` | **404** | Wave 1: Worker static surface |
-| `mcp.frihet.io/openapi.json` | **404** | Wave 1: serve from Worker |
-| `mcp.frihet.io/.well-known/mcp` | **404** | Wave 1: serve from Worker |
-| `mcp.frihet.io/robots.txt` | **404** | Wave 1: serve from Worker |
+| `mcp.frihet.io/llms.txt` | ✓ 200 | Wave 1 DONE — inlined in Worker |
+| `mcp.frihet.io/openapi.json` | ✓ 200 | Wave 1 DONE — proxies api.frihet.io |
+| `mcp.frihet.io/.well-known/mcp` | ✓ 200 | Wave 1 DONE — inlined in Worker |
+| `mcp.frihet.io/robots.txt` | ✓ 200 | Wave 1 DONE — inlined in Worker |
+| `mcp.frihet.io/agents.json` | ✓ 200 | Wave 1 DONE — inlined in Worker |
+| `mcp.frihet.io/releases.json` | ✓ 200 | Wave 1 DONE — ASSETS binding public/ |
+| `api.frihet.io/llms.txt` | ✓ 200 | Wave 1 DONE — inlined in api-proxy |
+| `api.frihet.io/agents.json` | ✓ 200 | Wave 1 DONE — inlined in api-proxy |
+| `api.frihet.io/.well-known/mcp` | ✓ 200 | Wave 1 DONE — inlined in api-proxy |
+| `api.frihet.io/robots.txt` | ✓ 200 | Wave 1 DONE — inlined in api-proxy |
 
-**Wave 1 PR**: `feat(worker): static AI-discoverability surface`. Cloudflare Worker should serve static files for crawlers AND handle MCP JSON-RPC for clients.
+**Wave 1 PR**: `feat(worker): static AI-discoverability surface` — SHIPPED (branch `feat/ai-surface`). Both workers now serve full AI-discoverability surface. Cloudflare Worker serves static files for crawlers AND handles MCP JSON-RPC for clients.
 
 ### Tool coverage targets (62 → 110+)
 
