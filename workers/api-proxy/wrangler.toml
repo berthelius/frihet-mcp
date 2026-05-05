@@ -3,6 +3,13 @@ main = "worker.js"
 compatibility_date = "2026-01-01"
 account_id = "ac385684ceb71bc889f6eb3abade1e32"
 
+# Static assets for AI-discoverability surface (Wave 2)
+# Serves public/ directory via env.ASSETS Fetcher binding.
+# Covers: openapi.json (canonical spec bundled from Frihet-ERP)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
 [vars]
 FRIHET_UPSTREAM_URL = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api"
 
