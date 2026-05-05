@@ -5,6 +5,13 @@ compatibility_flags = ["nodejs_compat"]
 
 routes = [{ pattern = "mcp.frihet.io/*", zone_name = "frihet.io" }]
 
+# Static assets for AI-discoverability surface (Wave 1)
+# Serves public/ directory via env.ASSETS Fetcher binding.
+# Covers: releases.json (pre-distributed from manifest emit)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
 [observability]
 enabled = true
 
@@ -43,3 +50,8 @@ bindings = [
 [[env.openai.kv_namespaces]]
 binding = "OAUTH_KV"
 id = "9207b98598f849109139ad11f3b0ac51"
+
+# Assets binding must be re-declared per env (same as DO and KV — not inherited)
+[env.openai.assets]
+directory = "./public"
+binding = "ASSETS"

@@ -12,4 +12,10 @@ interface Env {
   LANGFUSE_PUBLIC_KEY?: string;
   LANGFUSE_SECRET_KEY?: string;
   LANGFUSE_BASE_URL?: string;
+  /**
+   * Static assets binding for public/ directory.
+   * Used to serve releases.json and other static AI-discoverability files.
+   * Declared in wrangler.toml [assets] section.
+   */
+  ASSETS?: Fetcher;
 }
