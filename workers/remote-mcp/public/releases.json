@@ -3,7 +3,7 @@
   "languageCount": 17,
   "lastEmit": "2026-05-05T17:47:04.148Z",
   "manifestChecksum": "bd93c8fee76e36a16ecfe3abe82756318be57816390c9a6f413dbf8d065c414e",
-  "mcpToolCount": 0,
+  "mcpToolCount": 62,
   "products": {
     "app": {
       "status": "live",
@@ -19,7 +19,7 @@
       "install": "npm install @frihet/mcp-server",
       "npm": "@frihet/mcp-server",
       "status": "live",
-      "version": "1.0.0"
+      "version": "1.7.0-beta.1"
     },
     "sdk": {
       "install": "npm install @frihet/sdk",
@@ -28,5 +28,6 @@
       "version": "0.1.0"
     }
   },
-  "version": "0.1.0"
+  "releasedAt": "2026-05-05",
+  "version": "1.7.0-beta.1"
 }
