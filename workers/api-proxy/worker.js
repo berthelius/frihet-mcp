@@ -398,10 +398,33 @@ export default {
           },
         });
       }
+
+      // ---------------------------------------------------------------------------
+      // /openapi.json — served statically from ASSETS binding (public/openapi.json)
+      // Bypasses upstream Firebase which returns 404 for this route.
+      // Wave 2 fix: bundled from Frihet-ERP/functions/src/openapi.json at deploy time.
+      // ---------------------------------------------------------------------------
+      if (pathname === "/openapi.json" || pathname === "/v1/openapi.json") {
+        const assetUrl = new URL("/openapi.json", request.url);
+        const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString()));
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+          headers.set(key, value);
+        }
+        headers.set("Content-Type", "application/json; charset=utf-8");
+        headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+        const corsHeaders = getCorsHeaders(request);
+        if (corsHeaders) {
+          for (const [key, value] of Object.entries(corsHeaders)) {
+            headers.set(key, value);
+          }
+        }
+        return new Response(assetResponse.body, { status: assetResponse.status, headers });
+      }
     }
 
     // Public routes: forward to /publicApi/ (no /api/ prefix) for root-level endpoints
-    const PUBLIC_PATHS = ['/', '/openapi.json', '/openapi.yaml', '/v1', '/v1/', '/v1/openapi.json', '/v1/openapi.yaml', '/health', '/v1/health'];
+    const PUBLIC_PATHS = ['/', '/openapi.yaml', '/v1', '/v1/', '/v1/openapi.yaml', '/health', '/v1/health'];
     if (request.method === "GET" && PUBLIC_PATHS.includes(url.pathname)) {
       const upstream = new URL(url.pathname, UPSTREAM);
       upstream.pathname = "/publicApi" + url.pathname;
