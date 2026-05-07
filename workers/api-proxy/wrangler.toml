@@ -3,16 +3,15 @@ main = "worker.js"
 compatibility_date = "2026-01-01"
 account_id = "ac385684ceb71bc889f6eb3abade1e32"
 
-# Static assets for AI-discoverability surface (Wave 2)
-# Serves public/ directory via env.ASSETS Fetcher binding.
-# Covers: openapi.json (canonical spec bundled from Frihet-ERP)
-[assets]
-directory = "./public"
-binding = "ASSETS"
-run_worker_first = true
+# V2.1-D: [assets] binding REMOVED — was intercepting /llms.txt /robots.txt
+# /sitemap.xml /ai.txt /openapi.yaml /mcp.json /agents.json /.well-known/mcp
+# even with run_worker_first=true (wrangler 4.80 quirk). Worker now handles
+# all paths inline. /openapi.json redirects to canonical mcp.frihet.io copy.
 
 [vars]
-FRIHET_UPSTREAM_URL = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api"
+# publicApi CF deployed europe-west1 (confirmed via `firebase functions:list` 7-may).
+# Was us-central1 legacy — caused 404 on every /v1/* proxy request silently.
+FRIHET_UPSTREAM_URL = "https://europe-west1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api"
 
 [[routes]]
 pattern = "api.frihet.io/*"
