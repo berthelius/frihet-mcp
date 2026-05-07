@@ -9,6 +9,7 @@ account_id = "ac385684ceb71bc889f6eb3abade1e32"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+run_worker_first = true
 
 [vars]
 FRIHET_UPSTREAM_URL = "https://us-central1-gen-lang-client-0335716041.cloudfunctions.net/publicApi/api"
